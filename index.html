@@ -123,7 +123,7 @@ button:focus-visible{outline:3px solid var(--diamond);outline-offset:3px}
 
   <div class="stage" id="stage">
     <canvas id="game" aria-label="Juego: J salta por piedritas sobre la lava"></canvas>
-    <span class="ver" aria-hidden="true">v1.2</span>
+    <span class="ver" id="ver" aria-hidden="true" hidden></span>
 
     <div class="overlay" id="startOverlay" hidden>
       <div class="card">
@@ -170,6 +170,7 @@ button:focus-visible{outline:3px solid var(--diamond);outline-offset:3px}
   <p class="help">Movete con las flechas o con A y D. Saltá con la barra espaciadora. En tablet o celular usá los botones, o tocá la pantalla para saltar. Para empezar de nuevo, tocá el botón de arriba o la tecla R.</p>
 </main>
 
+<script src="version.js"></script>
 <script>
 (() => {
 'use strict';
@@ -1238,6 +1239,8 @@ $('soundBtn').addEventListener('click', () => {
 });
 
 /* ---------- Arranque ---------- */
+// La versión está en version.js. Si no se cargó, no se muestra nada.
+if (window.JGAME_VERSION) { $('ver').textContent = 'v' + window.JGAME_VERSION; $('ver').hidden = false; }
 if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas);
 window.addEventListener('resize', resize);
 
