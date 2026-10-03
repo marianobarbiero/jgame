@@ -69,6 +69,9 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 .levels{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%}
 .levels .btn{font-size:1.05rem;padding:8px 6px;margin-top:0}
 .levels .btn small{font-size:.68rem}
+.best{display:block;margin-top:3px;font-size:.85rem;line-height:1;letter-spacing:.08em}
+.best i{font-style:normal;color:rgba(29,14,5,.3)}
+.best i.on{color:#fff6c9;text-shadow:0 1px 0 #8a4b06}
 .btn.alt:active{box-shadow:0 2px 0 #0d0911}
 button:focus-visible{outline:3px solid var(--diamond);outline-offset:3px}
 .pad{display:none;justify-content:space-between;align-items:center;gap:12px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
@@ -88,8 +91,11 @@ button:focus-visible{outline:3px solid var(--diamond);outline-offset:3px}
   .row{gap:8px}
   .row .btn{font-size:1.05rem;padding:8px 10px}
   .row .btn small{font-size:.68rem}
-  .levels{grid-template-columns:repeat(2,1fr);gap:8px}
-  .levels .btn{font-size:.95rem;padding:6px 4px}
+  .levels{grid-template-columns:repeat(2,1fr);gap:6px}
+  .levels .btn{font-size:.9rem;padding:4px 4px 5px}
+  .levels .btn small{font-size:.62rem}
+  .best{margin-top:1px;font-size:.75rem}
+  #startOverlay h2 + p{display:none}
 }
 </style>
 </head>
@@ -639,6 +645,10 @@ function save(key, v) { try { localStorage.setItem(key, String(v)); } catch (e) 
 
 diamonds = Math.max(0, parseInt(load('jlava.diamonds', '0'), 10) || 0);
 soundOn = load('jlava.sound', '1') !== '0';
+// Mejor cantidad de estrellas con que se llegó a la bandera en cada nivel.
+let best = [];
+try { best = JSON.parse(load('jlava.best', '[]')); } catch (e) {}
+if (!Array.isArray(best)) best = [];
 
 /* ---------- Sonido ---------- */
 let actx = null;
@@ -804,7 +814,18 @@ function showPicker() {
   stopAuto(); toast = null;
   run = newRun(); state = 'ready'; overlayReady = false; parts.length = 0;
   winOverlay.hidden = true; startOverlay.hidden = false;
+  renderBest();
   renderHud();
+}
+// En el selector, debajo de cada nivel: las estrellas que ya sacaste ahí.
+function renderBest() {
+  document.querySelectorAll('.levels [data-level]').forEach(b => {
+    const i = +b.dataset.level, n = best[i] || 0;
+    let el = b.querySelector('.best');
+    if (!el) { el = document.createElement('span'); el.className = 'best'; b.appendChild(el); }
+    el.innerHTML = [0, 1, 2].map(k => '<i class="' + (k < n ? 'on' : '') + '">★</i>').join('');
+    el.setAttribute('aria-label', n + ' de 3 estrellas');
+  });
 }
 
 function handle(ev) {
@@ -857,6 +878,7 @@ function handle(ev) {
 function win() {
   const n = run.stars.filter(Boolean).length;
   const all = n === 3;
+  if (n > (best[levelIdx] || 0)) { best[levelIdx] = n; save('jlava.best', JSON.stringify(best)); }
   sfx.win();
   burst(level.goalX + 20, level.goalY - 80, 40, ['#ffd23f', '#5ee7f2', '#ff7a1a', '#f6efe6', '#2fbf71'], 260, 180);
   let title = '¡Llegaste a la meta!', text, sub = '';
