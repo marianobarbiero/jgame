@@ -79,6 +79,7 @@ body.editing .pad,body.editing .help{display:none!important}
 .best{display:block;margin-top:3px;font-size:.85rem;line-height:1;letter-spacing:.08em}
 .best i{font-style:normal;color:rgba(29,14,5,.3)}
 .best i.on{color:#fff6c9;text-shadow:0 1px 0 #8a4b06}
+.best em{font-style:normal;font-family:var(--font-body);font-weight:800;font-size:.68rem;letter-spacing:0;color:#1d0e05;vertical-align:1px}
 .btn.alt:active{box-shadow:0 2px 0 #0d0911}
 button:focus-visible{outline:3px solid var(--diamond);outline-offset:3px}
 .pad{display:none;justify-content:space-between;align-items:center;gap:12px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
@@ -566,6 +567,7 @@ function tick(g, inp, dt) {
     }
   }
 
+  const fallV = p.vy, wasAir = !p.onGround;
   p.y += p.vy * dt;
   p.onGround = false;
   for (const pl of level.platforms) {
@@ -574,6 +576,7 @@ function tick(g, inp, dt) {
       p.vy = 0;
     }
   }
+  if (wasAir && p.onGround && fallV > 250) ev.push('land');
 
   const cx = p.x + PW / 2, cy = p.y + PH / 2;
   level.stars.forEach((st, i) => {
@@ -734,6 +737,11 @@ if (!ed || !ed.cells || !ed.start || !ed.goal) ed = defaultEd();
 let best = [];
 try { best = JSON.parse(load('jlava.best', '[]')); } catch (e) {}
 if (!Array.isArray(best)) best = [];
+// Mejor tiempo (segundos) con que se llegó a la bandera en cada nivel.
+let bestT = [];
+try { bestT = JSON.parse(load('jlava.time', '[]')); } catch (e) {}
+if (!Array.isArray(bestT)) bestT = [];
+const fmtT = t => t.toFixed(1).replace('.', ',') + ' s';
 
 /* ---------- Sonido ---------- */
 let actx = null;
@@ -910,17 +918,30 @@ function renderBest() {
     const i = +b.dataset.level, n = best[i] || 0;
     let el = b.querySelector('.best');
     if (!el) { el = document.createElement('span'); el.className = 'best'; b.appendChild(el); }
-    el.innerHTML = [0, 1, 2].map(k => '<i class="' + (k < n ? 'on' : '') + '">★</i>').join('');
+    el.innerHTML = [0, 1, 2].map(k => '<i class="' + (k < n ? 'on' : '') + '">★</i>').join('') +
+      (bestT[i] ? ' <em>' + fmtT(bestT[i]) + '</em>' : '');
     el.setAttribute('aria-label', n + ' de 3 estrellas');
   });
 }
 
+// Qué dice el juego al perder, según cómo.
+const OUCH = {
+  dead: ['¡Uy, quema!', '¡A la lava!', '¡Qué calor!'],
+  spiked: ['¡Pinchazo!', '¡Auch, pinchos!', '¡Eso pincha!'],
+  bitten: ['¡El monstruo te comió!', '¡Ñam!', '¡Cuidado con el monstruo!'],
+  burned: ['¡Te quemaste!', '¡Bola de fuego!', '¡Fuego, fuego!'],
+  zapped: ['¡Bzzz! ¡Láser!', '¡Zap!', '¡Esperá que se apague!']
+};
+let ouch = '';
 function handle(ev) {
   for (const e of ev) {
     const p = run.p;
+    if (OUCH[e]) ouch = OUCH[e][(Math.random() * OUCH[e].length) | 0];
     if (e === 'jump') {
       sfx.jump();
       burst(p.x + PW / 2, p.y + PH, 4, ['#c3c8d8', '#8a8fa3'], 60, 20);
+    } else if (e === 'land') {
+      burst(p.x + PW / 2, p.y + PH, 6, ['#c3c8d8', '#8a8fa3', '#6c7186'], 80, 15);
     } else if (e === 'dropshake') {
       beep(150, 0.12, 'sawtooth', 0.04); beep(190, 0.12, 'sawtooth', 0.04, 0, 0.14); beep(150, 0.12, 'sawtooth', 0.04, 0, 0.28);
     } else if (e.startsWith('dropland')) {
@@ -933,7 +954,7 @@ function handle(ev) {
       burst(st.x, st.y, 14, ['#ffd23f', '#fff3b0', '#ff9f1c'], 170, 60);
       renderHud();
     } else if (e === 'dead') {
-      state = 'dead'; deadT = 0.85; shake = reduceMotion ? 0 : 7;
+      state = 'dead'; deadT = 1.0; shake = reduceMotion ? 0 : 7;
       sfx.dead();
       burst(p.x + PW / 2, run.lava + 4, 22, ['#ff7a1a', '#ffd23f', '#e2540f'], 230, 220);
     } else if (e.startsWith('stomp')) {
@@ -944,15 +965,15 @@ function handle(ev) {
       const m = run.monsters[+e.slice(4)];
       if (m.x > cam - 40 && m.x < cam + viewW + 40) { beep(240, 0.18, 'sawtooth', 0.035, -140); beep(120, 0.12, 'square', 0.025, -40, 0.05); }
     } else if (e === 'zapped') {
-      state = 'dead'; deadT = 0.85; shake = reduceMotion ? 0 : 7;
+      state = 'dead'; deadT = 1.0; shake = reduceMotion ? 0 : 7;
       sfx.dead();
       burst(p.x + PW / 2, p.y + PH / 2, 22, ['#ff2d55', '#ffe3ea', '#5ee7f2', '#2fbf71'], 230, 160);
     } else if (e === 'burned') {
-      state = 'dead'; deadT = 0.85; shake = reduceMotion ? 0 : 7;
+      state = 'dead'; deadT = 1.0; shake = reduceMotion ? 0 : 7;
       sfx.dead();
       burst(p.x + PW / 2, p.y + PH / 2, 22, ['#ff7a1a', '#ffd23f', '#e2540f', '#2a1420'], 230, 160);
     } else if (e === 'spiked' || e === 'bitten') {
-      state = 'dead'; deadT = 0.85; shake = reduceMotion ? 0 : 7;
+      state = 'dead'; deadT = 1.0; shake = reduceMotion ? 0 : 7;
       sfx.dead();
       burst(p.x + PW / 2, p.y + PH / 2, 22, ['#e8ecf5', '#e5484d', '#2fbf71', '#8f96ab'], 230, 160);
     } else if (e === 'won') {
@@ -964,16 +985,20 @@ function handle(ev) {
 
 function win() {
   const n = run.stars.filter(Boolean).length;
+  const tt = run.t;
   if (level.custom) {                                   // tu nivel: aviso y de vuelta al editor (no da diamantes)
     sfx.win();
     burst(level.goalX + 20, level.goalY - 80, 40, ['#ffd23f', '#5ee7f2', '#ff7a1a', '#f6efe6', '#2fbf71'], 260, 180);
-    toast = { t: 3.5, text: '¡Llegaste a la bandera!' + (level.stars.length ? ' ' + n + ' de ' + level.stars.length + (level.stars.length === 1 ? ' estrella' : ' estrellas') : '') };
+    toast = { t: 3.5, text: '¡Llegaste a la bandera!' + (level.stars.length ? ' ' + n + ' de ' + level.stars.length + (level.stars.length === 1 ? ' estrella' : ' estrellas') : ''), sub: 'Tiempo: ' + fmtT(tt) };
     const thisRun = run;
     setTimeout(() => { if (run === thisRun && state === 'won') openEditor(); }, 1800);
     return;
   }
   const all = n === 3;
   if (n > (best[levelIdx] || 0)) { best[levelIdx] = n; save('jlava.best', JSON.stringify(best)); }
+  const record = !!bestT[levelIdx] && tt < bestT[levelIdx];
+  if (!bestT[levelIdx] || tt < bestT[levelIdx]) { bestT[levelIdx] = Math.round(tt * 10) / 10; save('jlava.time', JSON.stringify(bestT)); }
+  const timeText = 'Tiempo: ' + fmtT(tt) + (record ? '. ¡Récord!' : '');
   sfx.win();
   burst(level.goalX + 20, level.goalY - 80, 40, ['#ffd23f', '#5ee7f2', '#ff7a1a', '#f6efe6', '#2fbf71'], 260, 180);
   let title = '¡Llegaste a la meta!', text, sub = '';
@@ -1000,7 +1025,7 @@ function win() {
   }
   $('winTitle').textContent = title;
   $('winText').textContent = text;
-  $('winSub').textContent = sub;
+  $('winSub').textContent = sub + (sub ? ' ' : '') + timeText + '.';
   $('nextBtn').textContent = isLast ? 'Volver al nivel 1' : 'Siguiente nivel';
   $('winNext').textContent = '';
   winOverlay.classList.add('party');
@@ -1012,7 +1037,7 @@ function win() {
     // Sin cartel: un aviso arriba y el nivel siguiente arranca solo.
     const miss = 3 - n;
     toast = { t: 4.5, text: level.name + ': ' + n + ' de 3 estrellas. ' +
-      (all ? '+1 diamante' : (miss === 1 ? 'Faltó 1' : 'Faltaron ' + miss) + ' para el diamante') };
+      (all ? '+1 diamante' : (miss === 1 ? 'Faltó 1' : 'Faltaron ' + miss) + ' para el diamante'), sub: timeText };
     setTimeout(() => { if (run === thisRun && state === 'won') startRun(levelIdx + 1); }, 1300);
     return;
   }
@@ -1314,8 +1339,9 @@ function drawJ(p, cheer) {
   ctx.fillStyle = '#e5484d'; ctx.fillRect(x + 1, y - 3, 20, 6);
   ctx.fillRect(p.face > 0 ? x + 17 : x - 3, y + 1, 8, 3);
   ctx.fillStyle = '#22182a';
-  if (p.face > 0) { ctx.fillRect(x + 10, y + 6, 3, 3); ctx.fillRect(x + 15, y + 6, 3, 3); ctx.fillRect(x + 11, y + 11, 6, 1); }
-  else { ctx.fillRect(x + 4, y + 6, 3, 3); ctx.fillRect(x + 9, y + 6, 3, 3); ctx.fillRect(x + 5, y + 11, 6, 1); }
+  const eh = !reduceMotion && time % 3.3 < 0.13 ? 1 : 3;            // parpadea cada tanto
+  if (p.face > 0) { ctx.fillRect(x + 10, y + 9 - eh, 3, eh); ctx.fillRect(x + 15, y + 9 - eh, 3, eh); ctx.fillRect(x + 11, y + 11, 6, 1); }
+  else { ctx.fillRect(x + 4, y + 9 - eh, 3, eh); ctx.fillRect(x + 9, y + 9 - eh, 3, eh); ctx.fillRect(x + 5, y + 11, 6, 1); }
 }
 
 function lavaTop(wx, k) {
@@ -1376,7 +1402,8 @@ function draw() {
   run.fires.forEach(drawFire);
   level.stars.forEach((st, i) => { if (!run.stars[i]) drawStar(st, i); });
   if (state !== 'dead') {
-    const hop = party && !reduceMotion ? Math.abs(Math.sin(time * 7)) * 16 : 0;
+    // Festeja saltando: en la bandera, saltitos; en el final del juego, saltos grandes.
+    const hop = (party || state === 'won') && !reduceMotion ? Math.abs(Math.sin(time * (party ? 7 : 11))) * (party ? 16 : 9) : 0;
     drawJ(hop ? Object.assign({}, run.p, { y: run.p.y - hop }) : run.p, state === 'won');
   }
   for (const q of parts) {
@@ -1401,6 +1428,26 @@ function draw() {
     ctx.globalAlpha = Math.min(1, toast.t * 2);
     ctx.fillStyle = '#0d1a1c'; ctx.fillText(toast.text, viewW / 2 + 1, 63);
     ctx.fillStyle = '#5ee7f2'; ctx.fillText(toast.text, viewW / 2, 62);
+    if (toast.sub) {
+      ctx.fillStyle = '#0d1a1c'; ctx.fillText(toast.sub, viewW / 2 + 1, 86);
+      ctx.fillStyle = '#ffd23f'; ctx.fillText(toast.sub, viewW / 2, 85);
+    }
+    ctx.globalAlpha = 1;
+  }
+  if (state === 'play' || state === 'dead' || state === 'won') {   // cronómetro
+    ctx.font = '700 18px "Pixelify Sans", "Trebuchet MS", sans-serif';
+    ctx.textAlign = 'right';
+    const tx = fmtT(run.t);
+    ctx.fillStyle = '#0d0911'; ctx.fillText(tx, viewW - 13, 31);
+    ctx.fillStyle = state === 'won' ? '#ffd23f' : '#f6efe6'; ctx.fillText(tx, viewW - 14, 30);
+  }
+  if (state === 'dead' && ouch) {                                  // mensaje gracioso al perder
+    const k = Math.min(1, (1.0 - deadT) * 6);
+    ctx.font = '700 ' + Math.round(22 + 8 * k) + 'px "Pixelify Sans", "Trebuchet MS", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.globalAlpha = Math.min(1, deadT * 4);
+    ctx.fillStyle = '#1c0d05'; ctx.fillText(ouch, viewW / 2 + 2, 172);
+    ctx.fillStyle = '#ff8a8a'; ctx.fillText(ouch, viewW / 2, 170);
     ctx.globalAlpha = 1;
   }
   if (level.banner && state === 'play' && run.t < 3.2) {
