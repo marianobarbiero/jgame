@@ -338,11 +338,11 @@ function draw() {
     ctx.fillStyle = '#0d0911'; ctx.fillText(tx, viewW - 13, 31);
     ctx.fillStyle = state === 'won' ? '#ffd23f' : '#f6efe6'; ctx.fillText(tx, viewW - 14, 30);
   }
-  if (state === 'dead' && ouch) {                                  // mensaje gracioso al perder
-    const k = Math.min(1, (1.0 - deadT) * 6);
+  if (ouchT > 0 && ouch && (state === 'dead' || state === 'play' || state === 'paused')) {   // mensaje gracioso al perder
+    const k = Math.min(1, (OUCH_T - ouchT) * 6);
     ctx.font = '700 ' + Math.round(22 + 8 * k) + 'px "Pixelify Sans", "Trebuchet MS", sans-serif';
     ctx.textAlign = 'center';
-    ctx.globalAlpha = Math.min(1, deadT * 4);
+    ctx.globalAlpha = Math.min(1, ouchT * 1.5);                       // al final se va apagando de a poco
     ctx.fillStyle = '#1c0d05'; ctx.fillText(ouch, viewW / 2 + 2, 172);
     ctx.fillStyle = '#ff8a8a'; ctx.fillText(ouch, viewW / 2, 170);
     ctx.globalAlpha = 1;

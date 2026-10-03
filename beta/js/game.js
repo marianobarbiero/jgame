@@ -92,7 +92,7 @@ function startParty() {
   [523, 659, 784, 1047, 2093].forEach(f => beep(f, 0.9, 'triangle', 0.04, 0, 2.2));
 }
 function startRun(i) {
-  stopAuto(); closeEditor();
+  stopAuto(); closeEditor(); ouchT = 0;
   if (i === 'custom') { useLevel(buildCustom(ed)); cam = 0; parts.length = 0; }
   else if (typeof i === 'number' && i !== levelIdx) { pickLevel(i); cam = 0; parts.length = 0; }
   if (levelIdx >= 0) save('jlava.level', levelIdx);
@@ -105,7 +105,7 @@ function startRun(i) {
 }
 
 function showPicker() {
-  stopAuto(); closeEditor(); toast = null;
+  stopAuto(); closeEditor(); toast = null; ouchT = 0;
   run = newRun(); state = 'ready'; overlayReady = false; parts.length = 0;
   winOverlay.hidden = true; pauseOverlay.hidden = true; startOverlay.hidden = false;
   renderBest();
@@ -131,11 +131,13 @@ const OUCH = {
   burned: ['¡Te quemaste!', '¡Bola de fuego!', '¡Fuego, fuego!'],
   zapped: ['¡Bzzz! ¡Láser!', '¡Zap!', '¡Esperá que se apague!']
 };
-let ouch = '';
+// El mensaje queda OUCH_T segundos (más que la pausa al perder), para que el nene llegue a leerlo.
+const OUCH_T = 3;
+let ouch = '', ouchT = 0;
 function handle(ev) {
   for (const e of ev) {
     const p = run.p;
-    if (OUCH[e]) ouch = OUCH[e][(Math.random() * OUCH[e].length) | 0];
+    if (OUCH[e]) { ouch = OUCH[e][(Math.random() * OUCH[e].length) | 0]; ouchT = OUCH_T; }
     if (e === 'jump') {
       sfx.jump();
       burst(p.x + PW / 2, p.y + PH, 4, ['#c3c8d8', '#8a8fa3'], 60, 20);

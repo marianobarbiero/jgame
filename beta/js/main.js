@@ -22,6 +22,7 @@ function frame(t) {
   if ($('pauseBtn').hidden === showPause) $('pauseBtn').hidden = !showPause;
   if (state !== 'paused') updateParts(dt);
   if (toast) { toast.t -= dt; if (toast.t <= 0) toast = null; }
+  if (ouchT > 0 && state !== 'paused') ouchT -= dt;
   if (party && !reduceMotion) {                       // fuegos artificiales del festejo final
     partyT -= dt;
     if (partyT <= 0) {
