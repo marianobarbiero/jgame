@@ -123,7 +123,7 @@ button:focus-visible{outline:3px solid var(--diamond);outline-offset:3px}
   <div class="stage" id="stage">
     <canvas id="game" aria-label="Juego: J salta por piedritas sobre la lava"></canvas>
 
-    <div class="overlay" id="startOverlay">
+    <div class="overlay" id="startOverlay" hidden>
       <div class="card">
         <h2>Elegí un nivel</h2>
         <p>Juntá las 3 estrellas y llegá a la bandera para ganar un diamante.</p>
@@ -634,8 +634,13 @@ function setMusic(song) {
     musicTick(); music.timer = setInterval(musicTick, 80);
   } catch (e) { music.song = null; }
 }
+let gesture = false;
+['keydown', 'pointerdown'].forEach(n => window.addEventListener(n, () => {
+  gesture = true;
+  if (actx && actx.state === 'suspended') actx.resume();
+}, true));
 function updateMusic() {
-  const playing = (state === 'play' || state === 'dead') && soundOn && !document.hidden;
+  const playing = gesture && (state === 'play' || state === 'dead') && soundOn && !document.hidden;
   setMusic(playing ? SONGS[levelIdx] || null : null);
 }
 
@@ -674,7 +679,7 @@ function updateParts(dt) {
 }
 
 /* ---------- Flujo del juego ---------- */
-let autoTimer = null, party = false, partyT = 0;
+let autoTimer = null, party = false, partyT = 0, toast = null;
 const FIREWORK = [
   ['#ffd23f', '#fff3b0', '#ff9f1c'], ['#5ee7f2', '#c9fbff', '#2fa8c9'],
   ['#ff7a1a', '#ffd23f', '#e5484d'], ['#2fbf71', '#b6f5cf', '#f6efe6'], ['#ff8ad8', '#ffd0f0', '#c048a0']
@@ -702,7 +707,7 @@ function startRun(i) {
 }
 
 function showPicker() {
-  stopAuto();
+  stopAuto(); toast = null;
   run = newRun(); state = 'ready'; overlayReady = false; parts.length = 0;
   winOverlay.hidden = true; startOverlay.hidden = false;
   renderHud();
@@ -776,26 +781,25 @@ function win() {
   $('winSub').textContent = sub;
   $('nextBtn').textContent = isLast ? 'Volver al nivel 1' : 'Siguiente nivel';
   $('winNext').textContent = '';
-  winOverlay.classList.toggle('party', isLast);
+  winOverlay.classList.add('party');
   $('winStars').querySelectorAll('svg').forEach((el, i) => el.classList.toggle('on', run.stars[i]));
   renderHud();
   const thisRun = run;
-  if (isLast) startParty();
+  const cup = all && diamonds > 0 && diamonds % 100 === 0;
+  if (!isLast && !cup) {
+    // Sin cartel: un aviso arriba y el nivel siguiente arranca solo.
+    const miss = 3 - n;
+    toast = { t: 4.5, text: level.name + ': ' + n + ' de 3 estrellas. ' +
+      (all ? '+1 diamante' : (miss === 1 ? 'Faltó 1' : 'Faltaron ' + miss) + ' para el diamante') };
+    setTimeout(() => { if (run === thisRun && state === 'won') startRun(levelIdx + 1); }, 1300);
+    return;
+  }
+  // Último nivel o copa ganada: cartel con festejo.
+  startParty();
   setTimeout(() => {
     if (run !== thisRun || state !== 'won') return;
     winOverlay.hidden = false;
-    setTimeout(() => { if (run === thisRun) overlayReady = true; }, isLast ? 2500 : 700);
-    if (isLast) return;
-    // El nivel siguiente arranca solo después de una cuenta regresiva.
-    let left = 3;
-    const nextName = LEVELS[levelIdx + 1].name.toLowerCase();
-    const show = () => { $('winNext').textContent = 'El ' + nextName + ' empieza en ' + left + '…'; };
-    show();
-    autoTimer = setInterval(() => {
-      if (run !== thisRun || state !== 'won') { clearInterval(autoTimer); autoTimer = null; return; }
-      left -= 1;
-      if (left <= 0) startRun(levelIdx + 1); else show();
-    }, 1000);
+    setTimeout(() => { if (run === thisRun) overlayReady = true; }, 2500);
   }, 800);
 }
 
@@ -1063,6 +1067,14 @@ function draw() {
 
   ctx.setTransform(s, 0, 0, s, 0, 0);
   drawEmbers();
+  if (toast) {                                        // aviso del nivel que se acaba de pasar
+    ctx.font = '700 17px "Pixelify Sans", "Trebuchet MS", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.globalAlpha = Math.min(1, toast.t * 2);
+    ctx.fillStyle = '#0d1a1c'; ctx.fillText(toast.text, viewW / 2 + 1, 63);
+    ctx.fillStyle = '#5ee7f2'; ctx.fillText(toast.text, viewW / 2, 62);
+    ctx.globalAlpha = 1;
+  }
   if (level.banner && state === 'play' && run.t < 3.2) {
     ctx.font = '700 24px "Pixelify Sans", "Trebuchet MS", sans-serif';
     ctx.textAlign = 'center';
@@ -1094,6 +1106,7 @@ function frame(t) {
     if (deadT <= 0) { const kept = run.stars; run = newRun(); run.stars = kept; state = 'play'; jumpQueued = false; }
   }
   updateParts(dt);
+  if (toast) { toast.t -= dt; if (toast.t <= 0) toast = null; }
   if (party && !reduceMotion) {                       // fuegos artificiales del festejo final
     partyT -= dt;
     if (partyT <= 0) {
@@ -1163,13 +1176,14 @@ window.addEventListener('resize', resize);
 
 function boot(data) {
   if (data && Number.isFinite(data.diamonds)) diamonds = Math.max(diamonds, data.diamonds);
-  pickLevel(parseInt(load('jlava.level', '0'), 10) || 0);
-  run = newRun();
+  // Al abrir arranca solo el nivel 1 (o el que se estaba jugando, si la página se actualizó en vivo).
+  pickLevel(data && Number.isFinite(data.level) ? data.level : 0);
+  run = newRun(); state = 'play';
   resize(); renderHud();
   requestAnimationFrame(t => { last = t; frame(t); });
 }
 const hot = window.claude && window.claude.hot;
-try { if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({ diamonds })); } catch (e) {}
+try { if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({ diamonds, level: levelIdx })); } catch (e) {}
 if (hot && typeof hot.ready === 'function') hot.ready(boot); else boot((hot && hot.data) || {});
 })();
 </script>
