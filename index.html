@@ -123,7 +123,7 @@ button:focus-visible{outline:3px solid var(--diamond);outline-offset:3px}
 
   <div class="stage" id="stage">
     <canvas id="game" aria-label="Juego: J salta por piedritas sobre la lava"></canvas>
-    <span class="ver" aria-hidden="true">v1.1</span>
+    <span class="ver" aria-hidden="true">v1.2</span>
 
     <div class="overlay" id="startOverlay" hidden>
       <div class="card">
@@ -178,6 +178,7 @@ button:focus-visible{outline:3px solid var(--diamond);outline-offset:3px}
 const H = 450, LAVA_Y = 402, RISE_DELAY = 1.5;
 const DROP_SHAKE = 0.5, DROP_G = 1400, DROP_LEN = 22;
 const MW = 26, MH = 24, STOMP_V = 380;
+const FIRE_V = 150, FIRE_RANGE = 300, FIRE_SIGHT = 440, FIRE_WARN = 0.9;
 const G = 1500, JUMP_V = 560, RUN = 185, MAX_FALL = 900;
 const PW = 22, PH = 42, STEP = 1 / 120;
 
@@ -271,31 +272,37 @@ const LEVELS = [
   },
   {
     // "rise": cuántos píxeles por segundo sube la lava. El camino va subiendo hacia la meta.
-    name: 'Nivel 4', sub: 'La lava sube', w: 2570, rise: 4.5,
-    banner: '¡La lava sube! ¡Apurate!',
+    name: 'Nivel 4', sub: 'La lava sube', w: 3410, rise: 4.5,
+    banner: '¡La lava sube! ¡Apurate!', hint: 'Saltá las bolas de fuego',
     sky: ['#1a0b0d', '#34140f', '#6a2a12'],
     platforms: [
       { x: 0,    y: 340, w: 380 },
       { x: 450,  y: 310, w: 80 },
-      { x: 590,  y: 290, w: 300 },
-      { x: 920,  y: 350, w: 50 },
-      { x: 980,  y: 260, w: 80 },
-      { x: 1110, y: 250, w: 320 },
-      { x: 1500, y: 220, w: 80 },
-      { x: 1640, y: 200, w: 300 },
-      { x: 2010, y: 180, w: 80 },
-      { x: 2150, y: 170, w: 420 }
+      { x: 590,  y: 290, w: 580 },
+      { x: 1200, y: 350, w: 50 },
+      { x: 1260, y: 260, w: 80 },
+      { x: 1390, y: 250, w: 320 },
+      { x: 1780, y: 220, w: 80 },
+      { x: 1920, y: 200, w: 580 },
+      { x: 2570, y: 180, w: 80 },
+      { x: 2710, y: 170, w: 700 }
     ],
     spikes: [
       { x: 230,  y: 340, w: 24, h: 46 },
       { x: 730,  y: 290, w: 24, h: 46 },
-      { x: 1110, y: 250, w: 24, h: 46 },
-      { x: 1280, y: 250, w: 24, h: 66 },
-      { x: 1780, y: 200, w: 24, h: 46 },
-      { x: 2300, y: 170, w: 24, h: 66 }
+      { x: 1390, y: 250, w: 24, h: 46 },
+      { x: 1560, y: 250, w: 24, h: 66 },
+      { x: 2060, y: 200, w: 24, h: 46 },
+      { x: 2860, y: 170, w: 24, h: 66 }
     ],
-    stars: [ { x: 945, y: 320 }, { x: 1292, y: 155 }, { x: 2312, y: 75 } ],
-    start: { x: 60, y: 340 - PH }, goalX: 2480, goalY: 170
+    // Monstruitos de fuego: caminan de x0 a x1 y cada "fire" segundos escupen una bola de fuego hacia J.
+    monsters: [
+      { x0: 940,  x1: 1040, y: 290, speed: 40, dir: -1, fire: 3.0 },
+      { x0: 2270, x1: 2370, y: 200, speed: 50, dir: -1, fire: 2.8 },
+      { x0: 3060, x1: 3160, y: 170, speed: 60, dir: 1, fire: 2.6 }
+    ],
+    stars: [ { x: 1225, y: 320 }, { x: 1572, y: 155 }, { x: 2872, y: 75 } ],
+    start: { x: 60, y: 340 - PH }, goalX: 3320, goalY: 170
   },
   {
     // "crush": techo de pinchos. Arranca con las puntas en y0 y baja "speed" píxeles por segundo.
@@ -406,7 +413,8 @@ function newRun() {
     ceil: level.crush ? level.crush.y0 : -9999,
     floor: level.floor ? level.floor.y0 : 9999,
     drops: level.drops.map(x => ({ x, state: 'idle', t: 0, y: 0, vy: 0 })),
-    monsters: level.monsters.map(m => ({ x: m.dir > 0 ? m.x0 : m.x1, dir: m.dir, alive: true })) };
+    monsters: level.monsters.map(m => ({ x: m.dir > 0 ? m.x0 : m.x1, dir: m.dir, alive: true, fireT: FIRE_WARN + 0.4, sight: false })),
+    fires: [] };
 }
 
 function hits(p, pl) {
@@ -490,12 +498,38 @@ function tick(g, inp, dt) {
   for (let i = 0; i < g.monsters.length; i++) {
     const m = g.monsters[i], def = level.monsters[i];
     if (!m.alive) continue;
-    m.x += m.dir * def.speed * dt;
-    if (m.x <= def.x0) { m.x = def.x0; m.dir = 1; } else if (m.x >= def.x1) { m.x = def.x1; m.dir = -1; }
+    // Los de fuego escupen cuando J está cerca y a la izquierda. Antes de escupir se frenan, miran a J
+    // y avisan con la boca prendida.
+    if (def.fire) {
+      const dx = m.x - (p.x + PW);
+      m.sight = dx > -10 && dx < FIRE_SIGHT;
+      if (!m.sight) m.fireT = FIRE_WARN + 0.4;
+      else if ((m.fireT -= dt) <= 0) {
+        m.fireT = def.fire;
+        g.fires.push({ x: m.x - 4, x0: m.x - 4, y: def.y - 13 });
+        ev.push('fire' + i);
+      }
+    }
+    const charging = def.fire && m.sight && m.fireT < FIRE_WARN;
+    if (def.speed && !charging) {
+      m.x += m.dir * def.speed * dt;
+      if (m.x <= def.x0) { m.x = def.x0; m.dir = 1; } else if (m.x >= def.x1) { m.x = def.x1; m.dir = -1; }
+    }
     const top = def.y - MH;
     if (p.x + PW - 3 > m.x + 2 && p.x + 3 < m.x + MW - 2 && p.y + PH > top + 2 && p.y < def.y) {
       if (p.vy > 0 && p.y + PH - top < 16) { m.alive = false; p.vy = -STOMP_V; p.onGround = false; ev.push('stomp' + i); }
       else { g.status = 'dead'; ev.push('bitten'); return ev; }
+    }
+  }
+  // Bolas de fuego: van derecho hacia la izquierda, a la altura de las rodillas de J. Se apagan solas o contra una piedra.
+  for (let i = g.fires.length - 1; i >= 0; i--) {
+    const f = g.fires[i];
+    f.x -= FIRE_V * dt;
+    if (f.x0 - f.x > FIRE_RANGE || level.platforms.some(pl => f.x > pl.x && f.x < pl.x + pl.w && f.y > pl.y && f.y < pl.y + pl.h)) {
+      g.fires.splice(i, 1); continue;
+    }
+    if (f.x + 6 > p.x + 3 && f.x - 6 < p.x + PW - 3 && f.y + 5 > p.y + 2 && f.y - 5 < p.y + PH) {
+      g.status = 'dead'; ev.push('burned'); return ev;
     }
   }
   // Pinchos flojos: empiezan a temblar con la anticipación justa para caerle encima a quien no frena.
@@ -740,6 +774,13 @@ function handle(ev) {
       const i = +e.slice(5), def = level.monsters[i];
       beep(300, 0.1, 'square', 0.05, 400); beep(700, 0.12, 'square', 0.04, 300, 0.08);
       burst(run.monsters[i].x + MW / 2, def.y - MH / 2, 16, ['#7a2233', '#ffd23f', '#ff7a1a', '#2a1420'], 180, 120);
+    } else if (e.startsWith('fire')) {
+      const m = run.monsters[+e.slice(4)];
+      if (m.x > cam - 40 && m.x < cam + viewW + 40) { beep(240, 0.18, 'sawtooth', 0.035, -140); beep(120, 0.12, 'square', 0.025, -40, 0.05); }
+    } else if (e === 'burned') {
+      state = 'dead'; deadT = 0.85; shake = reduceMotion ? 0 : 7;
+      sfx.dead();
+      burst(p.x + PW / 2, p.y + PH / 2, 22, ['#ff7a1a', '#ffd23f', '#e2540f', '#2a1420'], 230, 160);
     } else if (e === 'spiked' || e === 'bitten') {
       state = 'dead'; deadT = 0.85; shake = reduceMotion ? 0 : 7;
       sfx.dead();
@@ -919,19 +960,42 @@ function drawFloorSpikes() {
 function drawMonster(m, def) {
   if (!m.alive || m.x + MW < cam - 4 || m.x > cam + viewW + 4) return;
   const x = Math.round(m.x), y = def.y - MH;
-  const step = reduceMotion ? 0 : Math.sin(time * 10 + def.x0);
+  const charging = def.fire && m.sight && m.fireT < FIRE_WARN;
+  const step = reduceMotion || !def.speed || charging ? 0 : Math.sin(time * 10 + def.x0);
+  if (def.fire) {                                              // llamita en la cabeza
+    const fl = reduceMotion ? 0 : Math.round(Math.sin(time * 14 + def.x0) * 1.5);
+    ctx.fillStyle = '#ff7a1a'; ctx.fillRect(x + 9, y - 8 + fl, 8, 8);
+    ctx.fillStyle = '#ffd23f'; ctx.fillRect(x + 11, y - 5 + fl, 4, 5);
+  }
   ctx.fillStyle = '#2a1420';                                   // cuernos y patas
   ctx.fillRect(x + 3, y - 3, 4, 6); ctx.fillRect(x + 19, y - 3, 4, 6);
   ctx.fillRect(x + 4, y + 20 - (step > 0.3 ? 2 : 0), 6, 4); ctx.fillRect(x + 16, y + 20 - (step < -0.3 ? 2 : 0), 6, 4);
-  ctx.fillStyle = '#7a2233'; ctx.fillRect(x, y + 3, MW, 18);  // cuerpo
-  ctx.fillStyle = '#9c2f3f'; ctx.fillRect(x + 2, y + 1, MW - 4, 4);
+  ctx.fillStyle = def.fire ? '#b8401a' : '#7a2233'; ctx.fillRect(x, y + 3, MW, 18);  // cuerpo
+  ctx.fillStyle = def.fire ? '#d85a24' : '#9c2f3f'; ctx.fillRect(x + 2, y + 1, MW - 4, 4);
   ctx.fillStyle = '#ffd23f'; ctx.fillRect(x + 4, y + 6, 7, 6); ctx.fillRect(x + 15, y + 6, 7, 6);   // ojos
   ctx.fillStyle = '#1c0d12';
-  const look = m.dir > 0 ? 4 : 0;
+  const look = m.dir > 0 && !charging ? 4 : 0;
   ctx.fillRect(x + 4 + look, y + 8, 3, 4); ctx.fillRect(x + 15 + look, y + 8, 3, 4);
   ctx.fillRect(x + 3, y + 4, 8, 2); ctx.fillRect(x + 15, y + 4, 8, 2);                              // cejas enojadas
+  if (charging) {                                                                                    // boca prendida: va a escupir
+    const on = reduceMotion || Math.sin(time * 40) > -0.3;
+    ctx.fillStyle = '#1c0d12'; ctx.fillRect(x + 3, y + 13, 14, 7);
+    ctx.fillStyle = on ? '#ffd23f' : '#ff7a1a'; ctx.fillRect(x + 5, y + 15, 10, 3);
+    return;
+  }
   ctx.fillStyle = '#ff7a1a'; ctx.fillRect(x + 5, y + 15, 16, 3);                                    // boca
   ctx.fillStyle = '#f6efe6'; ctx.fillRect(x + 7, y + 15, 3, 2); ctx.fillRect(x + 12, y + 16, 3, 2); ctx.fillRect(x + 17, y + 15, 3, 2);
+}
+
+function drawFire(f) {
+  if (f.x < cam - 30 || f.x > cam + viewW + 30) return;
+  const x = Math.round(f.x), y = Math.round(f.y), fl = reduceMotion ? 0 : Math.round(Math.sin(time * 30 + f.x0) * 1.5);
+  ctx.globalAlpha = 0.6; ctx.fillStyle = '#e2540f'; ctx.fillRect(x + 7, y - 4 + fl, 12, 8);   // cola
+  ctx.globalAlpha = 0.35; ctx.fillRect(x + 18, y - 3 - fl, 10, 5);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#ff7a1a'; ctx.fillRect(x - 8, y - 7, 16, 14);
+  ctx.fillStyle = '#ffd23f'; ctx.fillRect(x - 6, y - 4, 9, 8);
+  ctx.fillStyle = '#fff6c9'; ctx.fillRect(x - 5, y - 3, 4, 4);
 }
 
 function drawGoal() {
@@ -1049,6 +1113,7 @@ function draw() {
   level.platforms.forEach(drawPlatform);
   level.spikes.forEach(drawSpikes);
   run.monsters.forEach((m, i) => drawMonster(m, level.monsters[i]));
+  run.fires.forEach(drawFire);
   level.stars.forEach((st, i) => { if (!run.stars[i]) drawStar(st, i); });
   if (state !== 'dead') {
     const hop = party && !reduceMotion ? Math.abs(Math.sin(time * 7)) * 16 : 0;
