@@ -51,6 +51,7 @@ const moveKeys = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: '
 const jumpKeys = ['Space', 'ArrowUp', 'KeyW'];
 window.addEventListener('keydown', e => {
   if (e.target === $('soundBtn')) return;
+  if (e.target && e.target.tagName === 'INPUT') return;          // escribiendo el nombre de un nivel
   if (state === 'edit') {                                // en el editor las flechas mueven la vista
     if (moveKeys[e.code]) { edScroll = moveKeys[e.code] === 'left' ? -1 : 1; e.preventDefault(); }
     return;
@@ -118,8 +119,10 @@ document.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click'
   ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => b.addEventListener(n, () => { edScroll = 0; }));
 });
 $('edPlay').addEventListener('click', () => startRun('custom'));
-$('edExit').addEventListener('click', showPicker);
-$('editBtn').addEventListener('click', openEditor);
+$('edExit').addEventListener('click', showMine);
+$('myBtn').addEventListener('click', showMine);
+$('myNew').addEventListener('click', () => { newMine(); openEditor(); });
+$('myBack').addEventListener('click', showPicker);
 $('editChip').addEventListener('click', () => { openEditor(); $('editChip').blur(); });
 
 document.querySelectorAll('[data-level]').forEach(b => b.addEventListener('click', () => startRun(+b.dataset.level)));
@@ -128,7 +131,7 @@ $('nextBtn').addEventListener('click', () => startRun(levelIdx < LEVELS.length -
 $('levelsBtn').addEventListener('click', showPicker);
 $('restartBtn').addEventListener('click', () => { startRun(); $('restartBtn').blur(); });
 $('soundBtn').addEventListener('click', () => {
-  soundOn = !soundOn; save('jlava.sound', soundOn ? '1' : '0'); renderHud();
+  soundOn = !soundOn; store.set('sound', soundOn ? 1 : 0); renderHud();
   if (soundOn) beep(660, 0.08, 'square', 0.03);
 });
 

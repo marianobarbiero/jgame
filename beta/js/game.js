@@ -4,7 +4,7 @@
 /* ---------- Estado ---------- */
 const $ = id => document.getElementById(id);
 const canvas = $('game'), ctx = canvas.getContext('2d');
-const startOverlay = $('startOverlay'), winOverlay = $('winOverlay'), pauseOverlay = $('pauseOverlay');
+const startOverlay = $('startOverlay'), winOverlay = $('winOverlay'), pauseOverlay = $('pauseOverlay'), myOverlay = $('myOverlay');
 const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let run = newRun();
@@ -17,33 +17,42 @@ let jumpQueued = false;
 const input = { left: false, right: false };
 const parts = [];
 
-// La beta (JGAME_CHANNEL en version.js) guarda todo con otro nombre: sus diamantes no se mezclan con los del juego.
-const CHANNEL = window.JGAME_CHANNEL || '';
-const storeKey = key => CHANNEL ? key.replace('jlava.', 'jlava-' + CHANNEL + '.') : key;
-function load(key, fallback) {
-  try { const v = localStorage.getItem(storeKey(key)); return v === null ? fallback : v; } catch (e) { return fallback; }
-}
-function save(key, v) { try { localStorage.setItem(storeKey(key), String(v)); } catch (e) {} }
-
-diamonds = Math.max(0, parseInt(load('jlava.diamonds', '0'), 10) || 0);
-soundOn = load('jlava.sound', '1') !== '0';
-let ed = null, edTool = 'rock', edCam = 0, edScroll = 0, edPaint = false;
-try { ed = JSON.parse(load('jlava.custom', 'null')); } catch (e) {}
-if (!ed || !ed.cells || !ed.start || !ed.goal) ed = defaultEd();
+// Los datos guardados (ver js/storage.js).
+diamonds = Math.max(0, parseInt(store.get('diamonds', 0), 10) || 0);
+soundOn = store.get('sound', 1) !== 0;
 // Mejor cantidad de estrellas con que se llegó a la bandera en cada nivel.
-let best = [];
-try { best = JSON.parse(load('jlava.best', '[]')); } catch (e) {}
+let best = store.get('best', []);
 if (!Array.isArray(best)) best = [];
 // Mejor tiempo (segundos) con que se llegó a la bandera en cada nivel.
-let bestT = [];
-try { bestT = JSON.parse(load('jlava.time', '[]')); } catch (e) {}
+let bestT = store.get('time', []);
 if (!Array.isArray(bestT)) bestT = [];
+
+// "Mis niveles": los niveles que hizo el nene. "ed" es el que se está editando o jugando.
+const validEd = e => e && e.cells && Array.isArray(e.start) && Array.isArray(e.goal);
+let mine = store.get('mine', null);
+if (!mine || !Array.isArray(mine.list)) {
+  mine = { list: [], current: null };
+  const old = store.get('custom', null);                         // el único nivel propio de antes pasa a ser el primero
+  if (validEd(old)) mine.list.push(Object.assign({ id: 'n1', name: 'Mi nivel 1' }, old));
+  store.set('mine', mine);
+}
+mine.list = mine.list.filter(validEd);
+let ed = mine.list.find(l => l.id === mine.current) || mine.list[0] || null;
+let edTool = 'rock', edCam = 0, edScroll = 0, edPaint = false, playFrom = 'editor';
+function saveMine() { if (ed) mine.current = ed.id; store.set('mine', mine); }
+function newMine() {
+  let n = mine.list.length + 1;
+  while (mine.list.some(l => l.name === 'Mi nivel ' + n)) n++;
+  const lv = Object.assign({ id: 'n' + Date.now().toString(36), name: 'Mi nivel ' + n }, defaultEd());
+  mine.list.push(lv); ed = lv; saveMine();
+  return lv;
+}
 const fmtT = t => t.toFixed(1).replace('.', ',') + ' s';
 
 /* ---------- HUD ---------- */
 function renderHud() {
   const n = run.stars.filter(Boolean).length;
-  $('levelLabel').textContent = state === 'edit' ? 'Tu nivel · Tocá el juego para poner cosas' : level.name + ' · ' + level.sub;
+  $('levelLabel').textContent = state === 'edit' ? (ed ? ed.name : 'Tu nivel') + ' · Tocá el juego para poner cosas' : level.name + ' · ' + level.sub;
   $('editChip').hidden = !level.custom || state === 'edit';
   $('hudStars').querySelectorAll('svg').forEach((el, i) => el.classList.toggle('on', run.stars[i]));
   $('hudStars').setAttribute('aria-label', 'Estrellas: ' + n + ' de 3');
@@ -93,13 +102,13 @@ function startParty() {
 }
 function startRun(i) {
   stopAuto(); closeEditor(); ouchT = 0;
-  if (i === 'custom') { useLevel(buildCustom(ed)); cam = 0; parts.length = 0; }
+  if (i === 'custom') { if (!ed) newMine(); useLevel(buildCustom(ed)); cam = 0; parts.length = 0; }
   else if (typeof i === 'number' && i !== levelIdx) { pickLevel(i); cam = 0; parts.length = 0; }
-  if (levelIdx >= 0) save('jlava.level', levelIdx);
+  if (levelIdx >= 0) store.set('level', levelIdx);
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   run = newRun();
   state = 'play'; overlayReady = false; accum = 0; jumpQueued = false;
-  startOverlay.hidden = true; winOverlay.hidden = true; pauseOverlay.hidden = true;
+  startOverlay.hidden = true; winOverlay.hidden = true; pauseOverlay.hidden = true; myOverlay.hidden = true;
   renderHud();
   beep(660, 0.08, 'square', 0.03);
 }
@@ -107,10 +116,47 @@ function startRun(i) {
 function showPicker() {
   stopAuto(); closeEditor(); toast = null; ouchT = 0;
   run = newRun(); state = 'ready'; overlayReady = false; parts.length = 0;
-  winOverlay.hidden = true; pauseOverlay.hidden = true; startOverlay.hidden = false;
+  winOverlay.hidden = true; pauseOverlay.hidden = true; myOverlay.hidden = true; startOverlay.hidden = false;
   renderBest();
   renderHud();
 }
+// "Mis niveles": la lista, con nombre (se puede cambiar), Jugar, Editar y Borrar (pide confirmar).
+function showMine() {
+  showPicker();
+  startOverlay.hidden = true; myOverlay.hidden = false;
+  renderMine();
+}
+function renderMine() {
+  const box = $('myList');
+  box.textContent = '';
+  if (!mine.list.length) {
+    const p = document.createElement('p'); p.className = 'my-empty';
+    p.textContent = 'Todavía no hiciste ningún nivel. ¡Tocá "Nuevo nivel"!';
+    box.appendChild(p); return;
+  }
+  for (const lv of mine.list) {
+    const row = document.createElement('div'); row.className = 'my-row';
+    const name = document.createElement('input');
+    name.className = 'my-name'; name.value = lv.name; name.maxLength = 24; name.setAttribute('aria-label', 'Nombre del nivel');
+    name.addEventListener('input', () => { lv.name = name.value.trim() || 'Sin nombre'; store.set('mine', mine); });
+    const btn = (text, cls, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'tool ' + cls; b.textContent = text; b.addEventListener('click', fn); row.appendChild(b); return b; };
+    row.appendChild(name);
+    btn('Jugar', 'go', () => { ed = lv; saveMine(); playFrom = 'list'; startRun('custom'); });
+    btn('Editar', '', () => { ed = lv; saveMine(); openEditor(); });
+    const del = btn('Borrar', '', () => {
+      if (!del.classList.contains('danger')) {                       // primer toque: pregunta
+        del.classList.add('danger'); del.textContent = '¿Seguro?';
+        setTimeout(() => { del.classList.remove('danger'); del.textContent = 'Borrar'; }, 3000);
+        return;
+      }
+      mine.list = mine.list.filter(l => l !== lv);
+      if (ed === lv) ed = mine.list[0] || null;
+      saveMine(); renderMine();
+    });
+    box.appendChild(row);
+  }
+}
+
 // En el selector, debajo de cada nivel: las estrellas que ya sacaste ahí.
 function renderBest() {
   document.querySelectorAll('.levels [data-level]').forEach(b => {
@@ -192,19 +238,19 @@ function win() {
     burst(level.goalX + 20, level.goalY - 80, 40, ['#ffd23f', '#5ee7f2', '#ff7a1a', '#f6efe6', '#2fbf71'], 260, 180);
     toast = { t: 3.5, text: '¡Llegaste a la bandera!' + (level.stars.length ? ' ' + n + ' de ' + level.stars.length + (level.stars.length === 1 ? ' estrella' : ' estrellas') : ''), sub: 'Tiempo: ' + fmtT(tt) };
     const thisRun = run;
-    setTimeout(() => { if (run === thisRun && state === 'won') openEditor(); }, 1800);
+    setTimeout(() => { if (run === thisRun && state === 'won') { if (playFrom === 'list') showMine(); else openEditor(); } }, 1800);
     return;
   }
   const all = n === 3;
-  if (n > (best[levelIdx] || 0)) { best[levelIdx] = n; save('jlava.best', JSON.stringify(best)); }
+  if (n > (best[levelIdx] || 0)) { best[levelIdx] = n; store.set('best', best); }
   const record = !!bestT[levelIdx] && tt < bestT[levelIdx];
-  if (!bestT[levelIdx] || tt < bestT[levelIdx]) { bestT[levelIdx] = Math.round(tt * 10) / 10; save('jlava.time', JSON.stringify(bestT)); }
+  if (!bestT[levelIdx] || tt < bestT[levelIdx]) { bestT[levelIdx] = Math.round(tt * 10) / 10; store.set('time', bestT); }
   const timeText = 'Tiempo: ' + fmtT(tt) + (record ? '. ¡Récord!' : '');
   sfx.win();
   burst(level.goalX + 20, level.goalY - 80, 40, ['#ffd23f', '#5ee7f2', '#ff7a1a', '#f6efe6', '#2fbf71'], 260, 180);
   let title = '¡Llegaste a la meta!', text, sub = '';
   if (all) {
-    diamonds += 1; save('jlava.diamonds', diamonds);
+    diamonds += 1; store.set('diamonds', diamonds);
     sfx.diamond();
     text = 'Juntaste las 3 estrellas y ganaste 1 diamante.';
     if (diamonds % 100 === 0) {

@@ -4,9 +4,11 @@
 /* ---------- Editor ---------- */
 function openEditor() {
   stopAuto();
+  if (!ed) newMine();
+  playFrom = 'editor';
   useLevel(buildCustom(ed));
   run = newRun(); state = 'edit'; parts.length = 0;
-  startOverlay.hidden = true; winOverlay.hidden = true; pauseOverlay.hidden = true;
+  startOverlay.hidden = true; winOverlay.hidden = true; pauseOverlay.hidden = true; myOverlay.hidden = true;
   document.body.classList.add('editing'); $('tools').hidden = false;
   edCam = Math.max(0, Math.min(edCam, ED_COLS * ED - viewW));
   renderHud();
@@ -15,7 +17,7 @@ function closeEditor() {
   document.body.classList.remove('editing'); $('tools').hidden = true; edPaint = false; edScroll = 0;
 }
 function edChanged() {
-  save('jlava.custom', JSON.stringify(ed));
+  saveMine();
   useLevel(buildCustom(ed)); run = newRun();
 }
 // Pone (o borra) lo que diga la herramienta en el casillero x, y.

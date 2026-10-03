@@ -272,7 +272,7 @@ function defaultEd() {
 }
 function buildCustom(ed) {
   const at = (x, y) => ed.cells[x + ',' + y];
-  const lv = { name: 'Tu nivel', sub: 'Lo hiciste vos', custom: true, banner: '¡Tu nivel!',
+  const lv = { name: ed.name || 'Tu nivel', sub: 'Lo hiciste vos', custom: true, banner: '¡Tu nivel!',
     sky: ['#0f1a17', '#1c2b25', '#5a2414'], platforms: [], spikes: [], stars: [], monsters: [], lasers: [], drops: [], dropFloor: [] };
   let right = Math.max(ed.start[0], ed.goal[0]);
   for (let y = 0; y < ED_ROWS; y++) {

@@ -6,7 +6,7 @@
 <meta name="description" content="J y la Lava: ocho niveles de saltar piedras sobre la lava, esquivar pinchos y láseres, y aplastar monstruos.">
 <title>J y la Lava</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Nunito:wght@600;800&display=swap">
-<link rel="stylesheet" href="styles.css?v=1.13">
+<link rel="stylesheet" href="styles.css?v=1.14">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -62,8 +62,19 @@
           <button class="btn" id="level7Btn" type="button" data-level="6">Nivel 7<small>Los monstruos</small></button>
           <button class="btn" id="level8Btn" type="button" data-level="7">Nivel 8<small>Los láseres</small></button>
         </div>
-        <button class="btn alt" id="editBtn" type="button">Crear tu nivel</button>
+        <button class="btn alt" id="myBtn" type="button">Mis niveles</button>
         <p class="small">Con 100 diamantes ganás la copa.</p>
+      </div>
+    </div>
+
+    <div class="overlay" id="myOverlay" hidden>
+      <div class="card my-card">
+        <h2>Mis niveles</h2>
+        <div class="my-list" id="myList"></div>
+        <div class="row">
+          <button class="btn" id="myNew" type="button">＋ Nuevo nivel</button>
+          <button class="btn alt" id="myBack" type="button">Volver</button>
+        </div>
       </div>
     </div>
 
@@ -127,13 +138,14 @@
   <p class="help help-keys">Movete con las flechas o con A y D. Saltá con la barra espaciadora. En tablet o celular usá los botones, o tocá la pantalla para saltar. Para empezar de nuevo, tocá el botón de arriba o la tecla R. Para poner pausa, la tecla P o Esc.</p>
 </main>
 
-<script src="version.js?v=1.13"></script>
-<script src="js/physics.js?v=1.13"></script>
-<script src="js/levels.js?v=1.13"></script>
-<script src="js/sound.js?v=1.13"></script>
-<script src="js/game.js?v=1.13"></script>
-<script src="js/editor.js?v=1.13"></script>
-<script src="js/draw.js?v=1.13"></script>
-<script src="js/main.js?v=1.13"></script>
+<script src="version.js?v=1.14"></script>
+<script src="js/physics.js?v=1.14"></script>
+<script src="js/levels.js?v=1.14"></script>
+<script src="js/storage.js?v=1.14"></script>
+<script src="js/sound.js?v=1.14"></script>
+<script src="js/game.js?v=1.14"></script>
+<script src="js/editor.js?v=1.14"></script>
+<script src="js/draw.js?v=1.14"></script>
+<script src="js/main.js?v=1.14"></script>
 </body>
 </html>

@@ -68,6 +68,14 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 .tool.go{background:var(--lava);color:#1d0e05;border-color:var(--lava-hot)}
 .tool-nav .tool{min-width:52px}
 body.editing .pad,body.editing .help{display:none!important}
+.my-card{width:min(100%,460px);box-sizing:border-box}
+.my-list{display:flex;flex-direction:column;gap:8px;width:100%;max-height:min(46vh,300px);overflow:auto}
+.my-row{display:flex;gap:6px;align-items:center}
+.my-name{flex:1;min-width:0;height:40px;padding-inline:8px;background:var(--basalt);color:var(--ink);border:2px solid var(--edge);font-family:var(--font-body);font-weight:800;font-size:.95rem}
+.my-name:focus{outline:3px solid var(--diamond);outline-offset:1px}
+.my-row .tool{padding-inline:8px}
+.tool.danger{background:#e5484d;color:#fff;border-color:#ff8a8a}
+.my-empty{margin:0;color:var(--muted);font-weight:700}
 .best{display:block;margin-top:3px;font-size:.85rem;line-height:1;letter-spacing:.08em}
 .best i{font-style:normal;color:rgba(29,14,5,.3)}
 .best i.on{color:#fff6c9;text-shadow:0 1px 0 #8a4b06}
@@ -106,6 +114,11 @@ button:focus-visible{outline:3px solid var(--diamond);outline-offset:3px}
   .row{gap:8px}
   .row .btn{font-size:1.05rem;padding:8px 10px}
   .row .btn small{font-size:.68rem}
+  .my-row{flex-wrap:wrap;padding-bottom:6px;border-bottom:1px solid var(--edge)}
+  .my-name{flex-basis:100%}
+  .my-list{max-height:180px}
+  .my-card h2{font-size:1.15rem}
+  .my-row .tool{flex:1}
   .levels{grid-template-columns:repeat(2,1fr);gap:6px}
   .levels .btn{font-size:.9rem;padding:4px 4px 5px}
   .levels .btn small{font-size:.62rem}
