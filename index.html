@@ -69,6 +69,13 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 .levels{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%}
 .levels .btn{font-size:1.05rem;padding:8px 6px;margin-top:0}
 .levels .btn small{font-size:.68rem}
+.tools{display:flex;flex-direction:column;gap:8px}
+.tool-list,.tool-nav{display:flex;flex-wrap:wrap;gap:6px}
+.tool{height:40px;padding-inline:10px;background:var(--basalt-2);color:var(--ink);border:2px solid var(--edge);font-family:var(--font-body);font-weight:800;font-size:.85rem;cursor:pointer;touch-action:manipulation}
+.tool[aria-pressed="true"]{background:var(--lava);color:#1d0e05;border-color:var(--lava-hot)}
+.tool.go{background:var(--lava);color:#1d0e05;border-color:var(--lava-hot)}
+.tool-nav .tool{min-width:52px}
+body.editing .pad,body.editing .help{display:none!important}
 .best{display:block;margin-top:3px;font-size:.85rem;line-height:1;letter-spacing:.08em}
 .best i{font-style:normal;color:rgba(29,14,5,.3)}
 .best i.on{color:#fff6c9;text-shadow:0 1px 0 #8a4b06}
@@ -128,6 +135,7 @@ button:focus-visible{outline:3px solid var(--diamond);outline-offset:3px}
       </div>
       <button class="chip" id="soundBtn" type="button" aria-pressed="true">Sonido</button>
       <button class="chip go" id="restartBtn" type="button">Empezar de nuevo</button>
+      <button class="chip go" id="editChip" type="button" hidden>Editar</button>
       <button class="chip go" id="levelsBtn" type="button">Niveles</button>
     </div>
   </header>
@@ -150,6 +158,7 @@ button:focus-visible{outline:3px solid var(--diamond);outline-offset:3px}
           <button class="btn" id="level7Btn" type="button" data-level="6">Nivel 7<small>Los monstruos</small></button>
           <button class="btn" id="level8Btn" type="button" data-level="7">Nivel 8<small>Los láseres</small></button>
         </div>
+        <button class="btn alt" id="editBtn" type="button">Crear tu nivel</button>
         <p class="small">Con 100 diamantes ganás la copa.</p>
       </div>
     </div>
@@ -177,6 +186,26 @@ button:focus-visible{outline:3px solid var(--diamond);outline-offset:3px}
       <button type="button" id="btnRight" aria-label="Derecha"><svg><use href="#i-right"/></svg></button>
     </div>
     <button type="button" id="btnJump" class="jump">SALTAR</button>
+  </div>
+
+  <div class="tools" id="tools" hidden>
+    <div class="tool-list" role="group" aria-label="Qué poner">
+      <button class="tool" type="button" data-tool="rock" aria-pressed="true">Piedra</button>
+      <button class="tool" type="button" data-tool="spike" aria-pressed="false">Pincho</button>
+      <button class="tool" type="button" data-tool="star" aria-pressed="false">Estrella</button>
+      <button class="tool" type="button" data-tool="mon" aria-pressed="false">Monstruo</button>
+      <button class="tool" type="button" data-tool="fire" aria-pressed="false">Monstruo de fuego</button>
+      <button class="tool" type="button" data-tool="laser" aria-pressed="false">Láser</button>
+      <button class="tool" type="button" data-tool="start" aria-pressed="false">J</button>
+      <button class="tool" type="button" data-tool="goal" aria-pressed="false">Bandera</button>
+      <button class="tool" type="button" data-tool="erase" aria-pressed="false">Borrar</button>
+    </div>
+    <div class="tool-nav">
+      <button class="tool" type="button" id="edLeft" aria-label="Mover a la izquierda"><svg width="18" height="18" fill="currentColor"><use href="#i-left"/></svg></button>
+      <button class="tool" type="button" id="edRight" aria-label="Mover a la derecha"><svg width="18" height="18" fill="currentColor"><use href="#i-right"/></svg></button>
+      <button class="tool go" type="button" id="edPlay">Probar</button>
+      <button class="tool" type="button" id="edExit">Salir</button>
+    </div>
   </div>
 
   <p class="help">Movete con las flechas o con A y D. Saltá con la barra espaciadora. En tablet o celular usá los botones, o tocá la pantalla para saltar. Para empezar de nuevo, tocá el botón de arriba o la tecla R.</p>
@@ -463,7 +492,7 @@ function newRun() {
     ceil: level.crush ? level.crush.y0 : -9999,
     floor: level.floor ? level.floor.y0 : 9999,
     drops: level.drops.map(x => ({ x, state: 'idle', t: 0, y: 0, vy: 0 })),
-    monsters: level.monsters.map(m => ({ x: m.dir > 0 ? m.x0 : m.x1, dir: m.dir, alive: true, fireT: FIRE_WARN + 0.4, sight: false })),
+    monsters: level.monsters.map(m => ({ x: m.sx !== undefined ? m.sx : m.dir > 0 ? m.x0 : m.x1, dir: m.dir, alive: true, fireT: FIRE_WARN + 0.4, sight: false })),
     fires: [] };
 }
 
@@ -616,11 +645,61 @@ function tick(g, inp, dt) {
   }
   if (p.y < g.ceil - 2 || p.y + PH > g.floor + 2) { g.status = 'dead'; ev.push('spiked'); return ev; }
   if (p.y + PH > g.lava + 16) { g.status = 'dead'; ev.push('dead'); }
-  else if (p.onGround && cx >= level.goalX - 4) { g.status = 'won'; ev.push('won'); }
+  else if (p.onGround && (level.custom ? Math.abs(cx - level.goalX) < 30 && Math.abs(p.y + PH - level.goalY) < 2 : cx >= level.goalX - 4)) {
+    g.status = 'won'; ev.push('won');
+  }
   return ev;
 }
 
-window.JGame = { tick, newRun, LEVELS, pickLevel, get level() { return level; } };
+/* ---------- Tu nivel (editor) ----------
+   El nivel propio es una grilla de bloques de 40 x 40: 10 filas (0 arriba) y ED_COLS columnas.
+   "cells" guarda qué hay en cada casillero ("x,y" -> piedra, pincho, estrella, monstruo, fuego o láser). */
+const ED = 40, ED_ROWS = 10, ED_COLS = 90;
+function defaultEd() {
+  const cells = {};
+  for (let x = 0; x <= 5; x++) cells[x + ',8'] = 'rock';
+  for (let x = 22; x <= 27; x++) cells[x + ',8'] = 'rock';
+  return { cells, start: [1, 7], goal: [25, 7] };
+}
+function buildCustom(ed) {
+  const at = (x, y) => ed.cells[x + ',' + y];
+  const lv = { name: 'Tu nivel', sub: 'Lo hiciste vos', custom: true, banner: '¡Tu nivel!',
+    sky: ['#0f1a17', '#1c2b25', '#5a2414'], platforms: [], spikes: [], stars: [], monsters: [], lasers: [], drops: [], dropFloor: [] };
+  let right = Math.max(ed.start[0], ed.goal[0]);
+  for (let y = 0; y < ED_ROWS; y++) {
+    for (let x = 0; x < ED_COLS; x++) {
+      const k = at(x, y);
+      if (!k) continue;
+      right = Math.max(right, x);
+      if (k === 'rock') {                                   // piedras pegadas en la misma fila: una sola piedra larga
+        let n = 1; while (at(x + n, y) === 'rock') n++;
+        lv.platforms.push({ x: x * ED, y: y * ED, w: n * ED, h: ED, float: true });
+        right = Math.max(right, x + n - 1); x += n - 1;
+      } else if (k === 'spike') lv.spikes.push({ x: x * ED + 4, y: (y + 1) * ED, w: ED - 8, h: 22 });
+      else if (k === 'star' && lv.stars.length < 3) lv.stars.push({ x: x * ED + ED / 2, y: y * ED + ED / 2 });
+      else if (k === 'mon' || k === 'fire') {                // camina por la piedra de abajo, sin atravesar paredes
+        let a = x, b = x;
+        const floor = c => at(c, y + 1) === 'rock' && at(c, y) !== 'rock';
+        if (floor(x)) { while (floor(a - 1)) a--; while (floor(b + 1)) b++; }
+        const m = { x0: a * ED, x1: Math.max(a * ED, (b + 1) * ED - MW), y: (y + 1) * ED, speed: k === 'fire' ? 40 : 50, dir: -1 };
+        m.sx = Math.max(m.x0, Math.min(m.x1, x * ED + (ED - MW) / 2));   // arranca donde lo pusiste
+        if (!floor(x)) m.x0 = m.x1 = m.sx;
+        if (k === 'fire') m.fire = 2.8;
+        lv.monsters.push(m);
+      } else if (k === 'laser') {                            // de arriba hasta la primera piedra de esa columna
+        let yb = 1; while (yb < ED_ROWS && at(x, yb) !== 'rock') yb++;
+        lv.lasers.push({ x: x * ED + ED / 2, y: 0, h: yb < ED_ROWS ? yb * ED : LAVA_Y, on: 1.2, off: 1.4, t0: (x % 3) * 0.4 });
+      }
+    }
+  }
+  lv.start = { x: ed.start[0] * ED + (ED - PW) / 2, y: (ed.start[1] + 1) * ED - PH };
+  lv.goalX = ed.goal[0] * ED + ED / 2; lv.goalY = (ed.goal[1] + 1) * ED;
+  lv.w = (right + 7) * ED;
+  return lv;
+}
+function useLevel(lv) { level = lv; levelIdx = -1; }
+
+window.JGame = { tick, newRun, LEVELS, pickLevel, buildCustom, useLevel, get level() { return level; } };
 
 /* ---------- Estado ---------- */
 const $ = id => document.getElementById(id);
@@ -629,7 +708,7 @@ const startOverlay = $('startOverlay'), winOverlay = $('winOverlay');
 const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let run = newRun();
-let state = 'ready';            // ready | play | dead | won
+let state = 'ready';            // ready | play | dead | won | edit
 let overlayReady = false;
 let diamonds = 0, soundOn = true;
 let time = 0, last = 0, accum = 0, deadT = 0, shake = 0;
@@ -645,6 +724,9 @@ function save(key, v) { try { localStorage.setItem(key, String(v)); } catch (e) 
 
 diamonds = Math.max(0, parseInt(load('jlava.diamonds', '0'), 10) || 0);
 soundOn = load('jlava.sound', '1') !== '0';
+let ed = null, edTool = 'rock', edCam = 0, edScroll = 0, edPaint = false;
+try { ed = JSON.parse(load('jlava.custom', 'null')); } catch (e) {}
+if (!ed || !ed.cells || !ed.start || !ed.goal) ed = defaultEd();
 // Mejor cantidad de estrellas con que se llegó a la bandera en cada nivel.
 let best = [];
 try { best = JSON.parse(load('jlava.best', '[]')); } catch (e) {}
@@ -745,13 +827,14 @@ let gesture = false;
 }, true));
 function updateMusic() {
   const playing = gesture && (state === 'play' || state === 'dead') && soundOn && !document.hidden;
-  setMusic(playing ? SONGS[levelIdx] || null : null);
+  setMusic(playing ? SONGS[level.custom ? 2 : levelIdx] || null : null);
 }
 
 /* ---------- HUD ---------- */
 function renderHud() {
   const n = run.stars.filter(Boolean).length;
-  $('levelLabel').textContent = level.name + ' · ' + level.sub;
+  $('levelLabel').textContent = state === 'edit' ? 'Tu nivel · Tocá el juego para poner cosas' : level.name + ' · ' + level.sub;
+  $('editChip').hidden = !level.custom || state === 'edit';
   $('hudStars').querySelectorAll('svg').forEach((el, i) => el.classList.toggle('on', run.stars[i]));
   $('hudStars').setAttribute('aria-label', 'Estrellas: ' + n + ' de 3');
   $('diamondCount').textContent = diamonds;
@@ -799,9 +882,10 @@ function startParty() {
   [523, 659, 784, 1047, 2093].forEach(f => beep(f, 0.9, 'triangle', 0.04, 0, 2.2));
 }
 function startRun(i) {
-  stopAuto();
-  if (typeof i === 'number' && i !== levelIdx) { pickLevel(i); cam = 0; parts.length = 0; }
-  save('jlava.level', levelIdx);
+  stopAuto(); closeEditor();
+  if (i === 'custom') { useLevel(buildCustom(ed)); cam = 0; parts.length = 0; }
+  else if (typeof i === 'number' && i !== levelIdx) { pickLevel(i); cam = 0; parts.length = 0; }
+  if (levelIdx >= 0) save('jlava.level', levelIdx);
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   run = newRun();
   state = 'play'; overlayReady = false; accum = 0; jumpQueued = false;
@@ -811,7 +895,7 @@ function startRun(i) {
 }
 
 function showPicker() {
-  stopAuto(); toast = null;
+  stopAuto(); closeEditor(); toast = null;
   run = newRun(); state = 'ready'; overlayReady = false; parts.length = 0;
   winOverlay.hidden = true; startOverlay.hidden = false;
   renderBest();
@@ -877,6 +961,14 @@ function handle(ev) {
 
 function win() {
   const n = run.stars.filter(Boolean).length;
+  if (level.custom) {                                   // tu nivel: aviso y de vuelta al editor (no da diamantes)
+    sfx.win();
+    burst(level.goalX + 20, level.goalY - 80, 40, ['#ffd23f', '#5ee7f2', '#ff7a1a', '#f6efe6', '#2fbf71'], 260, 180);
+    toast = { t: 3.5, text: '¡Llegaste a la bandera!' + (level.stars.length ? ' ' + n + ' de ' + level.stars.length + (level.stars.length === 1 ? ' estrella' : ' estrellas') : '') };
+    const thisRun = run;
+    setTimeout(() => { if (run === thisRun && state === 'won') openEditor(); }, 1800);
+    return;
+  }
   const all = n === 3;
   if (n > (best[levelIdx] || 0)) { best[levelIdx] = n; save('jlava.best', JSON.stringify(best)); }
   sfx.win();
@@ -928,6 +1020,60 @@ function win() {
     winOverlay.hidden = false;
     setTimeout(() => { if (run === thisRun) overlayReady = true; }, 2500);
   }, 800);
+}
+
+/* ---------- Editor ---------- */
+function openEditor() {
+  stopAuto();
+  useLevel(buildCustom(ed));
+  run = newRun(); state = 'edit'; parts.length = 0;
+  startOverlay.hidden = true; winOverlay.hidden = true;
+  document.body.classList.add('editing'); $('tools').hidden = false;
+  edCam = Math.max(0, Math.min(edCam, ED_COLS * ED - viewW));
+  renderHud();
+}
+function closeEditor() {
+  document.body.classList.remove('editing'); $('tools').hidden = true; edPaint = false; edScroll = 0;
+}
+function edChanged() {
+  save('jlava.custom', JSON.stringify(ed));
+  useLevel(buildCustom(ed)); run = newRun();
+}
+// Pone (o borra) lo que diga la herramienta en el casillero x, y.
+function edApply(x, y, painting) {
+  if (x < 0 || y < 0 || x >= ED_COLS || y >= ED_ROWS) return;
+  const key = x + ',' + y, c = ed.cells;
+  const isStart = ed.start[0] === x && ed.start[1] === y, isGoal = ed.goal[0] === x && ed.goal[1] === y;
+  if (painting && edTool !== 'rock' && edTool !== 'erase') return;
+  if (edTool === 'erase') {
+    if (c[key]) delete c[key];
+    else if (c[x + ',0'] === 'laser') delete c[x + ',0'];      // el láser se borra tocando cualquier lugar de su columna
+    else return;
+  } else if (edTool === 'start' || edTool === 'goal') {
+    if ((edTool === 'start' && isGoal) || (edTool === 'goal' && isStart)) return;
+    delete c[key]; ed[edTool] = [x, y];
+  } else {
+    if (isStart || isGoal) return;
+    const k = edTool === 'laser' ? x + ',0' : key;              // el láser va por columna: se guarda arriba de todo
+    if (c[k] === edTool) return;
+    if (edTool === 'star' && Object.values(c).filter(v => v === 'star').length >= 3) {
+      toast = { t: 2.5, text: 'Ya hay 3 estrellas: borrá una para mover' }; beep(200, 0.12, 'square', 0.03); return;
+    }
+    c[k] = edTool;
+  }
+  if (!painting || edTool === 'erase') beep(edTool === 'erase' ? 300 : 520, 0.05, 'square', 0.025);
+  edChanged();
+}
+function edCell(e) {
+  const r = canvas.getBoundingClientRect();
+  const lx = (e.clientX - r.left) * (canvas.width / r.width) / scale + cam;
+  const ly = (e.clientY - r.top) * (canvas.height / r.height) / scale;
+  return [Math.floor(lx / ED), Math.floor(ly / ED)];
+}
+function drawGrid() {
+  ctx.fillStyle = 'rgba(255,255,255,.07)';
+  for (let x = Math.floor(cam / ED) * ED; x < cam + viewW + ED; x += ED) ctx.fillRect(x, 0, 1, ED_ROWS * ED);
+  for (let y = 0; y <= ED_ROWS * ED; y += ED) ctx.fillRect(cam, y, viewW, 1);
 }
 
 /* ---------- Dibujo ---------- */
@@ -1074,7 +1220,7 @@ function drawMonster(m, def) {
 function drawLaser(lz) {
   const vert = !!lz.h;
   if ((vert ? lz.x + 10 : lz.x + lz.w + 10) < cam || lz.x - 10 > cam + viewW) return;
-  const on = laserOn(lz, run.t), warn = !on && laserWarn(lz, run.t);
+  const on = state === 'edit' || laserOn(lz, run.t), warn = !on && laserWarn(lz, run.t);
   const blink = reduceMotion || Math.sin(time * 40) > 0;
   ctx.fillStyle = '#3a4256';                                    // aparatos de las puntas
   if (vert) { ctx.fillRect(lz.x - 8, lz.y, 16, 12); ctx.fillRect(lz.x - 6, lz.y + lz.h - 5, 12, 5); }
@@ -1242,6 +1388,7 @@ function draw() {
   drawFloorSpikes();
   drawLava();
   drawCeiling();
+  if (state === 'edit') drawGrid();
 
   ctx.setTransform(s, 0, 0, s, 0, 0);
   drawEmbers();
@@ -1296,8 +1443,13 @@ function frame(t) {
     }
   }
   shake *= Math.pow(0.002, dt);
-  const target = Math.max(0, Math.min(level.w - viewW, run.p.x + PW / 2 - viewW * 0.38));
-  cam += (target - cam) * Math.min(1, dt * 8);
+  if (state === 'edit') {
+    edCam = Math.max(0, Math.min(ED_COLS * ED - viewW, edCam + edScroll * 520 * dt));
+    cam = edCam;
+  } else {
+    const target = Math.max(0, Math.min(level.w - viewW, run.p.x + PW / 2 - viewW * 0.38));
+    cam += (target - cam) * Math.min(1, dt * 8);
+  }
   draw();
   requestAnimationFrame(frame);
 }
@@ -1307,6 +1459,10 @@ const moveKeys = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: '
 const jumpKeys = ['Space', 'ArrowUp', 'KeyW'];
 window.addEventListener('keydown', e => {
   if (e.target === $('soundBtn')) return;
+  if (state === 'edit') {                                // en el editor las flechas mueven la vista
+    if (moveKeys[e.code]) { edScroll = moveKeys[e.code] === 'left' ? -1 : 1; e.preventDefault(); }
+    return;
+  }
   if (e.code === 'KeyR') { startRun(); return; }
   if (state === 'ready' || (state === 'won' && overlayReady)) {
     if (e.code === 'Space' || e.code === 'Enter') {
@@ -1319,7 +1475,7 @@ window.addEventListener('keydown', e => {
   if (moveKeys[e.code]) { input[moveKeys[e.code]] = true; e.preventDefault(); }
   else if (jumpKeys.includes(e.code)) { if (!e.repeat) jumpQueued = true; e.preventDefault(); }
 });
-window.addEventListener('keyup', e => { if (moveKeys[e.code]) input[moveKeys[e.code]] = false; });
+window.addEventListener('keyup', e => { if (moveKeys[e.code]) { input[moveKeys[e.code]] = false; edScroll = 0; } });
 window.addEventListener('blur', () => { input.left = input.right = false; });
 document.addEventListener('visibilitychange', updateMusic);
 
@@ -1337,6 +1493,31 @@ function hold(btn, key) {
 hold($('btnLeft'), 'left'); hold($('btnRight'), 'right'); hold($('btnJump'), 'jump');
 canvas.addEventListener('pointerdown', e => { if (state === 'play') { jumpQueued = true; e.preventDefault(); } });
 window.addEventListener('pointerdown', e => { if (e.pointerType === 'touch') $('pad').classList.add('show'); });
+
+canvas.addEventListener('pointerdown', e => {
+  if (state !== 'edit') return;
+  e.preventDefault(); edPaint = true;
+  try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  const [x, y] = edCell(e); edApply(x, y, false);
+});
+canvas.addEventListener('pointermove', e => {
+  if (state !== 'edit' || !edPaint) return;
+  const [x, y] = edCell(e); edApply(x, y, true);
+});
+['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => canvas.addEventListener(n, () => { edPaint = false; }));
+document.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click', () => {
+  edTool = b.dataset.tool;
+  document.querySelectorAll('[data-tool]').forEach(o => o.setAttribute('aria-pressed', o === b ? 'true' : 'false'));
+}));
+[['edLeft', -1], ['edRight', 1]].forEach(([id, d]) => {
+  const b = $(id);
+  b.addEventListener('pointerdown', e => { e.preventDefault(); edScroll = d; try { b.setPointerCapture(e.pointerId); } catch (err) {} });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => b.addEventListener(n, () => { edScroll = 0; }));
+});
+$('edPlay').addEventListener('click', () => startRun('custom'));
+$('edExit').addEventListener('click', showPicker);
+$('editBtn').addEventListener('click', openEditor);
+$('editChip').addEventListener('click', () => { openEditor(); $('editChip').blur(); });
 
 document.querySelectorAll('[data-level]').forEach(b => b.addEventListener('click', () => startRun(+b.dataset.level)));
 $('againBtn').addEventListener('click', () => startRun());
