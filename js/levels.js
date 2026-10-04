@@ -243,6 +243,9 @@ const LEVELS = [
       { x: 3520, y: 0,   h: 330, on: 0.8, off: 1.2 }
     ],
     stars: [ { x: 815, y: 240 }, { x: 1740, y: 205 }, { x: 2490, y: 140 } ],
+    // "boxes": cajas para golpear con la cabeza desde abajo. Dan "prize" diamantes, una sola vez por dispositivo.
+    // Esta está en el camino de arriba (la piedra flotante), arriba de la tercera estrella.
+    boxes: [ { x: 2475, y: 50, w: 30, h: 30, prize: 50 } ],
     start: { x: 60, y: 330 - PH }, goalX: 3670, goalY: 330
   }
 ];
@@ -251,6 +254,7 @@ LEVELS.forEach(lv => {
   lv.drops = lv.drops || [];
   lv.monsters = lv.monsters || [];
   lv.lasers = lv.lasers || [];
+  lv.boxes = lv.boxes || [];
   // Hasta dónde cae cada pincho flojo: la piedra que tiene abajo, o la lava.
   lv.dropFloor = lv.drops.map(x => {
     const under = lv.platforms.filter(p => x >= p.x && x <= p.x + p.w).map(p => p.y);
@@ -273,7 +277,7 @@ function defaultEd() {
 function buildCustom(ed) {
   const at = (x, y) => ed.cells[x + ',' + y];
   const lv = { name: ed.name || 'Tu nivel', sub: 'Lo hiciste vos', custom: true, banner: '¡Tu nivel!',
-    sky: ['#0f1a17', '#1c2b25', '#5a2414'], platforms: [], spikes: [], stars: [], monsters: [], lasers: [], drops: [], dropFloor: [] };
+    sky: ['#0f1a17', '#1c2b25', '#5a2414'], platforms: [], spikes: [], stars: [], monsters: [], lasers: [], boxes: [], drops: [], dropFloor: [] };
   let right = Math.max(ed.start[0], ed.goal[0]);
   for (let y = 0; y < ED_ROWS; y++) {
     for (let x = 0; x < ED_COLS; x++) {
