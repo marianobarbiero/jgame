@@ -26,10 +26,6 @@ if (!Array.isArray(best)) best = [];
 // Mejor tiempo (segundos) con que se llegó a la bandera en cada nivel.
 let bestT = store.get('time', []);
 if (!Array.isArray(bestT)) bestT = [];
-// Cajas ya abiertas (dan diamantes una sola vez): { "nivel-caja": true }, por ejemplo { "7-0": true }.
-let opened = store.get('boxes', {});
-if (!opened || typeof opened !== 'object') opened = {};
-const boxClaimed = i => levelIdx >= 0 && !!opened[levelIdx + '-' + i];
 
 // "Mis niveles": los niveles que hizo el nene. "ed" es el que se está editando o jugando.
 const validEd = e => e && e.cells && Array.isArray(e.start) && Array.isArray(e.goal);
@@ -230,13 +226,12 @@ function handle(ev) {
     if (e === 'jump') {
       sfx.jump();
       burst(p.x + PW / 2, p.y + PH, 4, ['#c3c8d8', '#8a8fa3'], 60, 20);
-    } else if (e.startsWith('box')) {                     // caja abierta: premio, si no se cobró antes
+    } else if (e.startsWith('box')) {                     // caja abierta: premio (se vuelve a cerrar al empezar el nivel de nuevo)
       const i = +e.slice(3), bx = level.boxes[i];
       burst(bx.x + bx.w / 2, bx.y + bx.h / 2, 26, ['#ffd23f', '#5ee7f2', '#fff6c9', '#c9fbff'], 220, 120);
-      if (levelIdx >= 0 && !boxClaimed(i)) {
+      if (levelIdx >= 0) {
         const before = Math.floor(diamonds / 100);
         diamonds += bx.prize; store.set('diamonds', diamonds);
-        opened[levelIdx + '-' + i] = true; store.set('boxes', opened);
         sfx.diamond(); beep(660, 0.1, 'square', 0.04); beep(990, 0.18, 'square', 0.04, 0, 0.09);
         toast = { t: 4, text: '¡+' + bx.prize + ' diamantes!', sub: Math.floor(diamonds / 100) > before ? '¡Y ganaste la copa!' : 'Tenés ' + diamonds + ' diamantes.' };
         renderHud();
