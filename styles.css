@@ -1,0 +1,127 @@
+/* J y la Lava: estilos. */
+
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+img{max-width:100%}
+[hidden]{display:none!important}
+
+/* Layout: a one-screen arcade cabinet. Name and counters on top, the game stage in the middle, touch buttons below.
+   Single dark look on purpose: the whole page lives inside the volcano. */
+:root{
+  color-scheme: dark;
+  --basalt:#17111c;
+  --basalt-2:#251b2e;
+  --edge:#3d2f49;
+  --ink:#f6efe6;
+  --muted:#b3a8bf;
+  --dim:#55475f;
+  --lava:#ff7a1a;
+  --lava-hot:#ffd23f;
+  --lava-deep:#b23a0a;
+  --diamond:#5ee7f2;
+  --font-display:"Pixelify Sans","Trebuchet MS",system-ui,sans-serif;
+  --font-body:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--basalt);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.4}
+.cabinet{max-width:1040px;margin-inline:auto;padding-inline:16px;padding-block:14px 20px;display:flex;flex-direction:column;gap:12px}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 20px}
+.name{min-width:0}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.6rem,5vw,2.3rem);line-height:1;margin:0;letter-spacing:.02em;color:var(--lava-hot);text-shadow:3px 3px 0 var(--lava-deep)}
+.level{margin:6px 0 0;color:var(--muted);font-weight:800;font-size:.8rem;text-transform:uppercase;letter-spacing:.1em}
+.hud{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.hud-item{display:flex;align-items:center;gap:6px;height:40px;padding-inline:10px;background:var(--basalt-2);border:2px solid var(--edge);font-family:var(--font-display);font-weight:700;font-size:1.2rem;font-variant-numeric:tabular-nums}
+.hud-item svg{width:22px;height:22px;fill:currentColor;flex:none}
+.stars svg{color:var(--dim)}
+.stars svg.on{color:var(--lava-hot)}
+.diamonds svg{color:var(--diamond)}
+.diamonds .of{color:var(--muted);font-size:.95rem}
+.cup{color:var(--dim)}
+.cup.on{color:var(--lava-hot)}
+.chip{height:40px;padding-inline:12px;background:transparent;color:var(--muted);border:2px solid var(--edge);font-family:var(--font-body);font-weight:800;font-size:.85rem;cursor:pointer}
+.chip[aria-pressed="true"],.chip.go{color:var(--ink)}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-height:max(240px,calc(100vh - 230px));max-height:max(240px,calc(100dvh - 230px));border:4px solid var(--edge);background:#120d18;overflow:hidden}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;padding:12px;background:rgba(18,13,24,.74);text-align:center;overflow:auto}
+.card{max-width:430px;background:var(--basalt-2);border:3px solid var(--lava-hot);box-shadow:6px 6px 0 var(--lava-deep);padding:18px 20px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.card h2{font-family:var(--font-display);font-weight:700;font-size:clamp(1.25rem,4.5vw,1.7rem);line-height:1.1;margin:0;color:var(--lava-hot);text-wrap:balance}
+.card p{margin:0;font-weight:600;text-wrap:pretty}
+.card .small{color:var(--muted);font-size:.9rem}
+.card .count{font-family:var(--font-display);font-weight:700;font-size:1.1rem;color:var(--diamond)}
+.card .count:empty{display:none}
+.overlay.party{background:rgba(18,13,24,.25)}
+.win-stars{display:flex;gap:8px}
+.win-stars svg{width:38px;height:38px;fill:var(--dim)}
+.win-stars svg.on{fill:var(--lava-hot)}
+.btn{font-family:var(--font-display);font-weight:700;font-size:1.25rem;background:var(--lava);color:#1d0e05;border:0;padding:10px 26px;margin-top:4px;box-shadow:0 5px 0 var(--lava-deep);cursor:pointer}
+.btn small{display:block;font-family:var(--font-body);font-weight:800;font-size:.75rem;letter-spacing:.02em}
+.btn.alt{background:var(--basalt);color:var(--ink);box-shadow:0 5px 0 #0d0911;outline:2px solid var(--edge);outline-offset:-2px}
+.row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--lava-deep)}
+.levels{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%}
+.levels .btn{font-size:1.05rem;padding:8px 6px;margin-top:0}
+.levels .btn small{font-size:.68rem}
+.tools{display:flex;flex-direction:column;gap:8px}
+.tool-list,.tool-nav{display:flex;flex-wrap:wrap;gap:6px}
+.tool{height:40px;padding-inline:10px;background:var(--basalt-2);color:var(--ink);border:2px solid var(--edge);font-family:var(--font-body);font-weight:800;font-size:.85rem;cursor:pointer;touch-action:manipulation}
+.tool[aria-pressed="true"]{background:var(--lava);color:#1d0e05;border-color:var(--lava-hot)}
+.tool.go{background:var(--lava);color:#1d0e05;border-color:var(--lava-hot)}
+.tool-nav .tool{min-width:52px}
+body.editing .pad,body.editing .help{display:none!important}
+.my-card{width:min(100%,460px);box-sizing:border-box}
+.my-list{display:flex;flex-direction:column;gap:8px;width:100%;max-height:min(46vh,300px);overflow:auto}
+.my-row{display:flex;gap:6px;align-items:center}
+.my-name{flex:1;min-width:0;height:40px;padding-inline:8px;background:var(--basalt);color:var(--ink);border:2px solid var(--edge);font-family:var(--font-body);font-weight:800;font-size:.95rem}
+.my-name:focus{outline:3px solid var(--diamond);outline-offset:1px}
+.my-row .tool{padding-inline:8px}
+.tool.danger{background:#e5484d;color:#fff;border-color:#ff8a8a}
+.my-empty{margin:0;color:var(--muted);font-weight:700}
+.best{display:block;margin-top:3px;font-size:.85rem;line-height:1;letter-spacing:.08em}
+.best i{font-style:normal;color:rgba(29,14,5,.3)}
+.best i.on{color:#fff6c9;text-shadow:0 1px 0 #8a4b06}
+.best em{font-style:normal;font-family:var(--font-body);font-weight:800;font-size:.68rem;letter-spacing:0;color:#1d0e05;vertical-align:1px}
+.btn.alt:active{box-shadow:0 2px 0 #0d0911}
+button:focus-visible{outline:3px solid var(--diamond);outline-offset:3px}
+.pad{display:none;justify-content:space-between;align-items:center;gap:12px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.pad.show{display:flex}
+.help-touch{display:none}
+@media (hover:none),(pointer:coarse){
+  .pad{display:flex}
+  .help-keys{display:none}
+  .help-touch{display:block}
+}
+.pad-move{display:flex;gap:10px}
+.pad button{width:68px;height:60px;display:grid;place-items:center;background:var(--basalt-2);color:var(--ink);border:3px solid var(--edge);box-shadow:0 5px 0 #0d0911;font-family:var(--font-display);font-weight:700;font-size:1.15rem;touch-action:none}
+.pad button svg{width:26px;height:26px;fill:currentColor}
+.pad button.jump{width:auto;min-width:130px;padding-inline:18px;background:var(--lava);color:#1d0e05;border-color:var(--lava-hot);box-shadow:0 5px 0 var(--lava-deep)}
+.pad button.down{transform:translateY(3px);box-shadow:0 2px 0 #0d0911}
+@media (hover:none) and (orientation:portrait),(pointer:coarse) and (orientation:portrait){
+  .cabinet{min-height:100%;box-sizing:border-box}
+  .pad{margin-top:auto;padding-bottom:6px}
+  .pad-move{gap:16px}
+  .pad button{width:84px;height:72px}
+  .pad button svg{width:30px;height:30px}
+  .pad button.jump{min-width:140px;font-size:1.3rem}
+}
+.pause-btn{position:absolute;top:8px;left:8px;z-index:1;width:42px;height:42px;display:grid;place-items:center;background:rgba(18,13,24,.55);border:2px solid rgba(255,255,255,.3);color:#f6efe6;cursor:pointer;touch-action:manipulation}
+.pause-btn svg{width:20px;height:20px;fill:currentColor}
+.help{margin:0;color:var(--muted);font-size:.9rem;font-weight:600;max-width:65ch}
+.ver{position:absolute;bottom:6px;right:8px;padding:2px 6px;background:rgba(18,13,24,.6);color:rgba(255,255,255,.85);font-size:.7rem;font-family:var(--font-display);letter-spacing:.06em;pointer-events:none;z-index:1}
+@media (max-width:560px){
+  .stage{aspect-ratio:1/1}
+  .overlay{padding:8px}
+  .card{padding:14px 12px;gap:8px}
+  .row{gap:8px}
+  .row .btn{font-size:1.05rem;padding:8px 10px}
+  .row .btn small{font-size:.68rem}
+  .my-row{flex-wrap:wrap;padding-bottom:6px;border-bottom:1px solid var(--edge)}
+  .my-name{flex-basis:100%}
+  .my-list{max-height:180px}
+  .my-card h2{font-size:1.15rem}
+  .my-row .tool{flex:1}
+  .levels{grid-template-columns:repeat(2,1fr);gap:6px}
+  .levels .btn{font-size:.9rem;padding:4px 4px 5px}
+  .levels .btn small{font-size:.62rem}
+  .best{margin-top:1px;font-size:.75rem}
+  #startOverlay h2 + p{display:none}
+}
