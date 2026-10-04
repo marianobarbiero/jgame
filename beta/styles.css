@@ -30,7 +30,7 @@ body{margin:0;background:var(--basalt);color:var(--ink);font-family:var(--font-b
 h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.6rem,5vw,2.3rem);line-height:1;margin:0;letter-spacing:.02em;color:var(--lava-hot);text-shadow:3px 3px 0 var(--lava-deep)}
 .level{margin:6px 0 0;color:var(--muted);font-weight:800;font-size:.8rem;text-transform:uppercase;letter-spacing:.1em}
 .hud{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
-.hud-item{display:flex;align-items:center;gap:6px;height:40px;padding-inline:10px;background:var(--basalt-2);border:2px solid var(--edge);font-family:var(--font-display);font-weight:700;font-size:1.2rem;font-variant-numeric:tabular-nums}
+.hud-item{display:flex;align-items:center;gap:6px;height:40px;padding-inline:10px;background:var(--basalt-2);border:2px solid var(--edge);font-family:var(--font-body);font-weight:800;font-size:1.2rem;font-variant-numeric:tabular-nums}
 .hud-item svg{width:22px;height:22px;fill:currentColor;flex:none}
 .stars svg{color:var(--dim)}
 .stars svg.on{color:var(--lava-hot)}
@@ -47,7 +47,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 .card h2{font-family:var(--font-display);font-weight:700;font-size:clamp(1.25rem,4.5vw,1.7rem);line-height:1.1;margin:0;color:var(--lava-hot);text-wrap:balance}
 .card p{margin:0;font-weight:600;text-wrap:pretty}
 .card .small{color:var(--muted);font-size:.9rem}
-.card .count{font-family:var(--font-display);font-weight:700;font-size:1.1rem;color:var(--diamond)}
+.card .count{font-family:var(--font-body);font-weight:800;font-size:1.1rem;color:var(--diamond)}
 .card .count:empty{display:none}
 .overlay.party{background:rgba(18,13,24,.25)}
 .win-stars{display:flex;gap:8px}
@@ -59,7 +59,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 .row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
 .btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--lava-deep)}
 .levels{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%}
-.levels .btn{font-size:1.05rem;padding:8px 6px;margin-top:0}
+.levels .btn{font-size:1.05rem;padding:8px 6px;margin-top:0;font-family:var(--font-body);font-weight:800}
 .levels .btn small{font-size:.68rem}
 .tools{display:flex;flex-direction:column;gap:8px}
 .tool-list,.tool-nav{display:flex;flex-wrap:wrap;gap:6px}
@@ -108,7 +108,7 @@ button:focus-visible{outline:3px solid var(--diamond);outline-offset:3px}
 .pause-btn{position:absolute;top:8px;left:8px;z-index:1;width:42px;height:42px;display:grid;place-items:center;background:rgba(18,13,24,.55);border:2px solid rgba(255,255,255,.3);color:#f6efe6;cursor:pointer;touch-action:manipulation}
 .pause-btn svg{width:20px;height:20px;fill:currentColor}
 .help{margin:0;color:var(--muted);font-size:.9rem;font-weight:600;max-width:65ch}
-.ver{position:absolute;bottom:6px;right:8px;padding:2px 6px;background:rgba(18,13,24,.6);color:rgba(255,255,255,.85);font-size:.7rem;font-family:var(--font-display);letter-spacing:.06em;pointer-events:none;z-index:1}
+.ver{position:absolute;bottom:6px;right:8px;padding:2px 6px;background:rgba(18,13,24,.6);color:rgba(255,255,255,.85);font-size:.75rem;font-family:var(--font-body);font-weight:800;letter-spacing:.06em;pointer-events:none;z-index:1}
 @media (max-width:560px){
   .stage{aspect-ratio:1/1}
   .overlay{padding:8px}
@@ -125,5 +125,7 @@ button:focus-visible{outline:3px solid var(--diamond);outline-offset:3px}
   .levels .btn{font-size:.9rem;padding:4px 4px 5px}
   .levels .btn small{font-size:.62rem}
   .best{margin-top:1px;font-size:.75rem}
-  #startOverlay h2 + p{display:none}
+  #startOverlay h2 + p,#startOverlay .small{display:none}
+  #startOverlay .card{gap:6px;padding-block:10px}
+  #myBtn{font-size:1rem;padding:6px 18px;margin-top:0}
 }
