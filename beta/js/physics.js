@@ -19,7 +19,7 @@ function newRun() {
     floor: level.floor ? level.floor.y0 : 9999,
     drops: level.drops.map(x => ({ x, state: 'idle', t: 0, y: 0, vy: 0 })),
     monsters: level.monsters.map(m => ({ x: m.sx !== undefined ? m.sx : m.dir > 0 ? m.x0 : m.x1, dir: m.dir, alive: true, fireT: FIRE_WARN + 0.4, sight: false })),
-    fires: [] };
+    fires: [], boxes: level.boxes.map(() => false) };
 }
 
 function hits(p, pl) {
@@ -91,6 +91,12 @@ function tick(g, inp, dt) {
       p.vx = 0;
     }
   }
+  for (const bx of level.boxes) {
+    if (hits(p, bx)) {
+      if (p.vx > 0) p.x = bx.x - PW; else if (p.vx < 0) p.x = bx.x + bx.w;
+      p.vx = 0;
+    }
+  }
 
   const fallV = p.vy, wasAir = !p.onGround;
   p.y += p.vy * dt;
@@ -101,6 +107,16 @@ function tick(g, inp, dt) {
       p.vy = 0;
     }
   }
+  // Cajas: si J les pega con la cabeza (subiendo), se abren.
+  level.boxes.forEach((bx, i) => {
+    if (!hits(p, bx)) return;
+    if (p.vy > 0) { p.y = bx.y - PH; p.onGround = true; }
+    else {
+      p.y = bx.y + bx.h;
+      if (!g.boxes[i]) { g.boxes[i] = true; ev.push('box' + i); } else ev.push('bump');
+    }
+    p.vy = 0;
+  });
   if (wasAir && p.onGround && fallV > 250) ev.push('land');
 
   const cx = p.x + PW / 2, cy = p.y + PH / 2;

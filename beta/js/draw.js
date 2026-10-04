@@ -193,6 +193,20 @@ function drawGoal() {
   }
 }
 
+function drawBox(bx, i) {
+  if (bx.x + bx.w < cam - 4 || bx.x > cam + viewW + 4) return;
+  const open = run.boxes[i] || boxClaimed(i), x = bx.x, y = bx.y, w = bx.w, h = bx.h;
+  ctx.fillStyle = open ? '#5a4632' : '#b97f0a'; ctx.fillRect(x, y, w, h);                 // borde
+  ctx.fillStyle = open ? '#7a6248' : '#ffd23f'; ctx.fillRect(x + 3, y + 3, w - 6, h - 6);  // frente
+  ctx.fillStyle = open ? '#5a4632' : '#b97f0a';                                            // remaches
+  [[5, 5], [w - 8, 5], [5, h - 8], [w - 8, h - 8]].forEach(([a, b]) => ctx.fillRect(x + a, y + b, 3, 3));
+  if (open) return;
+  const cx = x + w / 2, cy = y + h / 2 + (reduceMotion ? 0 : Math.round(Math.sin(time * 4) * 1));
+  ctx.beginPath(); ctx.moveTo(cx - 7, cy - 3); ctx.lineTo(cx - 4, cy - 7); ctx.lineTo(cx + 4, cy - 7); ctx.lineTo(cx + 7, cy - 3); ctx.lineTo(cx, cy + 7); ctx.closePath();
+  ctx.fillStyle = '#5ee7f2'; ctx.fill();                                                    // diamante
+  ctx.fillStyle = '#c9fbff'; ctx.fillRect(cx - 3, cy - 5, 3, 3);
+}
+
 function drawStar(st, i) {
   const bob = reduceMotion ? 0 : Math.sin(time * 3 + i * 1.7) * 4, cx = st.x, cy = st.y + bob;
   ctx.fillStyle = 'rgba(255,210,63,.16)';
@@ -295,6 +309,7 @@ function draw() {
   level.platforms.forEach(drawPlatform);
   level.spikes.forEach(drawSpikes);
   level.lasers.forEach(drawLaser);
+  level.boxes.forEach(drawBox);
   run.monsters.forEach((m, i) => drawMonster(m, level.monsters[i]));
   run.fires.forEach(drawFire);
   level.stars.forEach((st, i) => { if (!run.stars[i]) drawStar(st, i); });
