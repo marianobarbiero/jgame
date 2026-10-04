@@ -226,16 +226,16 @@ function handle(ev) {
     if (e === 'jump') {
       sfx.jump();
       burst(p.x + PW / 2, p.y + PH, 4, ['#c3c8d8', '#8a8fa3'], 60, 20);
-    } else if (e.startsWith('box')) {                     // caja abierta: premio (se vuelve a cerrar al empezar el nivel de nuevo)
+    } else if (e.startsWith('box')) {                     // caja abierta: premio, también en tus niveles (se cierra al empezar de nuevo)
       const i = +e.slice(3), bx = level.boxes[i];
       burst(bx.x + bx.w / 2, bx.y + bx.h / 2, 26, ['#ffd23f', '#5ee7f2', '#fff6c9', '#c9fbff'], 220, 120);
-      if (levelIdx >= 0) {
+      {
         const before = Math.floor(diamonds / 100);
         diamonds += bx.prize; store.set('diamonds', diamonds);
         sfx.diamond(); beep(660, 0.1, 'square', 0.04); beep(990, 0.18, 'square', 0.04, 0, 0.09);
         toast = { t: 4, text: '¡+' + bx.prize + ' diamantes!', sub: Math.floor(diamonds / 100) > before ? '¡Y ganaste la copa!' : 'Tenés ' + diamonds + ' diamantes.' };
         renderHud();
-      } else beep(180, 0.08, 'square', 0.03);
+      }
     } else if (e === 'bump') {
       beep(180, 0.08, 'square', 0.03);
     } else if (e === 'land') {

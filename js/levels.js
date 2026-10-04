@@ -299,6 +299,8 @@ function buildCustom(ed) {
         if (!floor(x)) m.x0 = m.x1 = m.sx;
         if (k === 'fire') m.fire = 2.8;
         lv.monsters.push(m);
+      } else if (k === 'box50' || k === 'box80') {             // caja para golpear con la cabeza, centrada en el casillero
+        lv.boxes.push({ x: x * ED + 5, y: y * ED + 5, w: 30, h: 30, prize: k === 'box50' ? 50 : 80 });
       } else if (k === 'laser') {                            // de arriba hasta la primera piedra de esa columna
         let yb = 1; while (yb < ED_ROWS && at(x, yb) !== 'rock') yb++;
         lv.lasers.push({ x: x * ED + ED / 2, y: 0, h: yb < ED_ROWS ? yb * ED : LAVA_Y, on: 1.2, off: 1.4, t0: (x % 3) * 0.4 });

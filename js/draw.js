@@ -200,6 +200,11 @@ function drawBox(bx, i) {
   ctx.fillStyle = open ? '#7a6248' : '#ffd23f'; ctx.fillRect(x + 3, y + 3, w - 6, h - 6);  // frente
   ctx.fillStyle = open ? '#5a4632' : '#b97f0a';                                            // remaches
   [[5, 5], [w - 8, 5], [5, h - 8], [w - 8, h - 8]].forEach(([a, b]) => ctx.fillRect(x + a, y + b, 3, 3));
+  if (level.custom && !open) {                                   // en tus niveles, cuántos diamantes da (50 u 80)
+    ctx.font = '800 13px Nunito, "Trebuchet MS", sans-serif'; ctx.textAlign = 'center';
+    ctx.fillStyle = '#1c0d05'; ctx.fillText(bx.prize, x + w / 2 + 1, y - 3);
+    ctx.fillStyle = '#ffd23f'; ctx.fillText(bx.prize, x + w / 2, y - 4);
+  }
   if (open) return;
   const cx = x + w / 2, cy = y + h / 2 + (reduceMotion ? 0 : Math.round(Math.sin(time * 4) * 1));
   ctx.beginPath(); ctx.moveTo(cx - 7, cy - 3); ctx.lineTo(cx - 4, cy - 7); ctx.lineTo(cx + 4, cy - 7); ctx.lineTo(cx + 7, cy - 3); ctx.lineTo(cx, cy + 7); ctx.closePath();
@@ -335,7 +340,7 @@ function draw() {
   ctx.setTransform(s, 0, 0, s, 0, 0);
   drawEmbers();
   if (toast) {                                        // aviso del nivel que se acaba de pasar
-    ctx.font = '700 17px "Pixelify Sans", "Trebuchet MS", sans-serif';
+    ctx.font = '800 17px Nunito, "Trebuchet MS", sans-serif';       // los avisos tienen números: letra clara
     ctx.textAlign = 'center';
     ctx.globalAlpha = Math.min(1, toast.t * 2);
     ctx.fillStyle = '#0d1a1c'; ctx.fillText(toast.text, viewW / 2 + 1, 63);
@@ -347,7 +352,7 @@ function draw() {
     ctx.globalAlpha = 1;
   }
   if (state === 'play' || state === 'dead' || state === 'won') {   // cronómetro
-    ctx.font = '700 18px "Pixelify Sans", "Trebuchet MS", sans-serif';
+    ctx.font = '800 18px Nunito, "Trebuchet MS", sans-serif';
     ctx.textAlign = 'right';
     const tx = fmtT(run.t);
     ctx.fillStyle = '#0d0911'; ctx.fillText(tx, viewW - 13, 31);
