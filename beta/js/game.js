@@ -126,9 +126,48 @@ function showMine() {
   startOverlay.hidden = true; myOverlay.hidden = false;
   renderMine();
 }
+// Niveles hechos en la beta que todavía no están acá. Solo en el estable (la beta no se trae a sí misma).
+function betaLevels() {
+  if (CHANNEL === 'beta') return [];
+  const b = store.getFrom('beta', 'mine', null);
+  let list = b && Array.isArray(b.list) ? b.list.filter(validEd) : [];
+  if (!list.length) {                                               // beta vieja, antes de "Mis niveles": un solo nivel
+    const old = store.getFrom('beta', 'custom', null);
+    if (validEd(old)) list = [Object.assign({ id: 'custom', name: 'Mi nivel de la beta' }, old)];
+  }
+  return list.filter(l => !mine.list.some(m => m.from === 'beta:' + l.id));
+}
+let mineNote = '';
+function importBeta() {
+  const list = betaLevels();
+  for (const l of list) {
+    const copy = JSON.parse(JSON.stringify(l));
+    copy.from = 'beta:' + l.id;
+    copy.id = 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    if (mine.list.some(m => m.name === copy.name)) copy.name = (copy.name + ' (beta)').slice(0, 24);
+    mine.list.push(copy);
+  }
+  if (!ed && mine.list.length) ed = mine.list[0];
+  saveMine();
+  mineNote = '¡Listo! Trajiste ' + list.length + (list.length === 1 ? ' nivel' : ' niveles') + ' de la beta.';
+  beep(880, 0.09, 'square', 0.04); beep(1320, 0.16, 'square', 0.04, 0, 0.08);
+  renderMine();
+}
 function renderMine() {
   const box = $('myList');
   box.textContent = '';
+  const fromBeta = betaLevels().length;
+  if (fromBeta) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'tool go my-import'; b.id = 'myImport';
+    b.textContent = 'Traer mis niveles de la beta (' + fromBeta + ')';
+    b.addEventListener('click', importBeta);
+    box.appendChild(b);
+  }
+  if (mineNote) {
+    const p = document.createElement('p'); p.className = 'my-empty my-note'; p.textContent = mineNote;
+    box.appendChild(p); mineNote = '';
+  }
   if (!mine.list.length) {
     const p = document.createElement('p'); p.className = 'my-empty';
     p.textContent = 'Todavía no hiciste ningún nivel. ¡Tocá "Nuevo nivel"!';

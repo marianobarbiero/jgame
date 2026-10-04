@@ -21,6 +21,13 @@ const store = {
   set(name, value) {
     try { localStorage.setItem(store.key(name), JSON.stringify(value)); } catch (e) {}
   },
+  // Leer lo que guardó otro canal del mismo sitio (el estable lee la beta para traer sus niveles).
+  getFrom(channel, name, fallback) {
+    try {
+      const v = localStorage.getItem('jlava' + (channel ? '-' + channel : '') + '.' + name);
+      return v === null ? fallback : JSON.parse(v);
+    } catch (e) { return fallback; }
+  },
   // Todo junto, para una copia de seguridad o, más adelante, para la nube.
   NAMES: ['diamonds', 'sound', 'best', 'time', 'level', 'mine'],
   exportAll() {
