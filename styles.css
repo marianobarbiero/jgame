@@ -76,6 +76,8 @@ body.editing .pad,body.editing .help{display:none!important}
 .my-row .tool{padding-inline:8px}
 .tool.danger{background:#e5484d;color:#fff;border-color:#ff8a8a}
 .my-empty{margin:0;color:var(--muted);font-weight:700}
+.my-note{color:var(--diamond)}
+.my-import{flex:none;width:100%}
 .best{display:block;margin-top:3px;font-size:.85rem;line-height:1;letter-spacing:.08em}
 .best i{font-style:normal;color:rgba(29,14,5,.3)}
 .best i.on{color:#fff6c9;text-shadow:0 1px 0 #8a4b06}
