@@ -16,7 +16,8 @@ function frame(t) {
     }
   } else if (state === 'dead') {
     deadT -= dt;
-    if (deadT <= 0) { const kept = run.stars; run = newRun(); run.stars = kept; state = 'play'; jumpQueued = false; }
+    // Al perder vuelve al principio: conserva las estrellas y las cajas que ya abrió (no se cierran hasta empezar de nuevo).
+    if (deadT <= 0) { const kept = run.stars, keptBoxes = run.boxes; run = newRun(); run.stars = kept; run.boxes = keptBoxes; state = 'play'; jumpQueued = false; }
   }
   const showPause = state === 'play' || state === 'dead';
   if ($('pauseBtn').hidden === showPause) $('pauseBtn').hidden = !showPause;

@@ -195,7 +195,7 @@ function drawGoal() {
 
 function drawBox(bx, i) {
   if (bx.x + bx.w < cam - 4 || bx.x > cam + viewW + 4) return;
-  const open = run.boxes[i] || boxClaimed(i), x = bx.x, y = bx.y, w = bx.w, h = bx.h;
+  const open = run.boxes[i], x = bx.x, y = bx.y, w = bx.w, h = bx.h;
   ctx.fillStyle = open ? '#5a4632' : '#b97f0a'; ctx.fillRect(x, y, w, h);                 // borde
   ctx.fillStyle = open ? '#7a6248' : '#ffd23f'; ctx.fillRect(x + 3, y + 3, w - 6, h - 6);  // frente
   ctx.fillStyle = open ? '#5a4632' : '#b97f0a';                                            // remaches
