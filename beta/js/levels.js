@@ -3,7 +3,8 @@
 
 const LEVELS = [
   {
-    name: 'Nivel 1', sub: 'Las piedritas', w: 2680,
+    name: 'Nivel 1', sub: 'Las piedritas', w: 2680, rise: 2.5, riseTo: 200,
+    banner: '¡La lava sube! ¡Apurate!',
     sky: ['#120d18', '#261426', '#5a2414'],
     // Sin "h": columna de piedra que sale de la lava. Con "h": piedra flotante.
     platforms: [
@@ -29,7 +30,8 @@ const LEVELS = [
     start: { x: 70, y: 330 - PH }, goalX: 2560, goalY: 335
   },
   {
-    name: 'Nivel 2', sub: 'Los pinchos', w: 2790,
+    name: 'Nivel 2', sub: 'Los pinchos', w: 2790, rise: 2.8, riseTo: 200,
+    banner: '¡La lava sube! ¡Apurate!',
     sky: ['#0e0f1f', '#1f1a3a', '#5a1f1c'],
     platforms: [
       { x: 0,    y: 330, w: 220 },
@@ -61,7 +63,8 @@ const LEVELS = [
     start: { x: 70, y: 330 - PH }, goalX: 2710, goalY: 330
   },
   {
-    name: 'Nivel 3', sub: 'Pinchos altos', w: 2940,
+    name: 'Nivel 3', sub: 'Pinchos altos', w: 2940, rise: 2.8, riseTo: 200,
+    banner: '¡La lava sube! ¡Apurate!',
     sky: ['#0b1512', '#14291f', '#5a2414'],
     platforms: [
       { x: 0,    y: 330, w: 420 },
@@ -91,7 +94,7 @@ const LEVELS = [
   },
   {
     // "rise": cuántos píxeles por segundo sube la lava. El camino va subiendo hacia la meta.
-    name: 'Nivel 4', sub: 'La lava sube', w: 3410, rise: 4.5,
+    name: 'Nivel 4', sub: 'La lava sube', w: 3410, rise: 5.0,
     banner: '¡La lava sube! ¡Apurate!', hint: 'Saltá las bolas de fuego',
     sky: ['#1a0b0d', '#34140f', '#6a2a12'],
     platforms: [
@@ -116,9 +119,9 @@ const LEVELS = [
     ],
     // Monstruitos de fuego: caminan de x0 a x1 y cada "fire" segundos escupen una bola de fuego hacia J.
     monsters: [
-      { x0: 940,  x1: 1040, y: 290, speed: 40, dir: -1, fire: 3.0 },
-      { x0: 2270, x1: 2370, y: 200, speed: 50, dir: -1, fire: 2.8 },
-      { x0: 3060, x1: 3160, y: 170, speed: 60, dir: 1, fire: 2.6 }
+      { x0: 940,  x1: 1040, y: 290, speed: 55, dir: -1, fire: 2.6 },
+      { x0: 2270, x1: 2370, y: 200, speed: 65, dir: -1, fire: 2.5 },
+      { x0: 3060, x1: 3160, y: 170, speed: 75, dir: 1, fire: 2.4 }
     ],
     stars: [ { x: 1225, y: 320 }, { x: 1572, y: 155 }, { x: 2872, y: 75 } ],
     start: { x: 60, y: 340 - PH }, goalX: 3320, goalY: 170
@@ -126,7 +129,7 @@ const LEVELS = [
   {
     // "crush": techo de pinchos. Arranca con las puntas en y0 y baja "speed" píxeles por segundo.
     // El camino va bajando, así J siempre tiene lugar para saltar si no se queda quieto.
-    name: 'Nivel 5', sub: 'Techo de pinchos', w: 3695, crush: { y0: 14, speed: 2.6 },
+    name: 'Nivel 5', sub: 'Techo de pinchos', w: 3695, crush: { y0: 14, speed: 3.2 },
     banner: '¡Los pinchos bajan! ¡Apurate!', hint: 'Ojo: los pinchos rojos se caen',
     sky: ['#0d0d16', '#1c1b2e', '#5a2414'],
     platforms: [
@@ -152,7 +155,7 @@ const LEVELS = [
     // Techo que baja ("crush") y piso de pinchos que sube ("floor") hasta cerrarse.
     // El camino va por el medio, casi a la misma altura todo el tiempo.
     name: 'Nivel 6', sub: 'La trampa', w: 3085,
-    crush: { y0: 14, speed: 3.6 }, floor: { y0: 410, speed: 2.85 },
+    crush: { y0: 14, speed: 4.2 }, floor: { y0: 410, speed: 3.3 },
     banner: '¡Los pinchos se cierran! ¡Apurate!',
     sky: ['#120b18', '#231233', '#5a2414'],
     platforms: [
@@ -200,12 +203,12 @@ const LEVELS = [
       { x: 3550, y: 330, w: 14, h: 84 }
     ],
     monsters: [
-      { x0: 200,  x1: 320,  y: 330, speed: 45, dir: -1 },
-      { x0: 800,  x1: 930,  y: 320, speed: 50, dir: -1 },
-      { x0: 1600, x1: 1790, y: 300, speed: 70, dir: 1 },
-      { x0: 2405, x1: 2465, y: 180, speed: 35, dir: 1 },
-      { x0: 2730, x1: 2780, y: 350, speed: 40, dir: -1 },
-      { x0: 3250, x1: 3360, y: 330, speed: 60, dir: -1 }
+      { x0: 200,  x1: 320,  y: 330, speed: 63, dir: -1 },
+      { x0: 800,  x1: 930,  y: 320, speed: 70, dir: -1 },
+      { x0: 1600, x1: 1790, y: 300, speed: 98, dir: 1 },
+      { x0: 2405, x1: 2465, y: 180, speed: 44, dir: 1 },
+      { x0: 2730, x1: 2780, y: 350, speed: 56, dir: -1 },
+      { x0: 3250, x1: 3360, y: 330, speed: 84, dir: -1 }
     ],
     stars: [ { x: 880, y: 235 }, { x: 1700, y: 215 }, { x: 2475, y: 140 } ],
     start: { x: 60, y: 330 - PH }, goalX: 3690, goalY: 330
@@ -230,17 +233,17 @@ const LEVELS = [
     ],
     spikes: [],
     lasers: [
-      { x: 300,  y: 0,   h: 330, on: 1.2, off: 1.6 },
+      { x: 300,  y: 0,   h: 330, on: 1.2, off: 1.2 },
       { x: 790,  y: 304, w: 50 },
-      { x: 1000, y: 0,   h: 320, on: 1.0, off: 1.4, t0: 0.5 },
+      { x: 1000, y: 0,   h: 320, on: 1.0, off: 1.05, t0: 0.5 },
       { x: 1120, y: 304, w: 50 },
-      { x: 1650, y: 238, w: 180, on: 1.6, off: 1.4 },
-      { x: 1990, y: 0,   h: 300, on: 1.2, off: 1.4, t0: 0.7 },
-      { x: 2420, y: 0,   h: 180, on: 1.3, off: 1.2 },
-      { x: 2600, y: 0,   h: 350, on: 1.0, off: 1.0 },
-      { x: 2760, y: 0,   h: 350, on: 1.0, off: 1.0, t0: 1.0 },
-      { x: 3300, y: 308, w: 50, on: 1.5, off: 1.5 },
-      { x: 3520, y: 0,   h: 330, on: 0.8, off: 1.2 }
+      { x: 1650, y: 238, w: 180, on: 1.6, off: 1.05 },
+      { x: 1990, y: 0,   h: 300, on: 1.2, off: 1.05, t0: 0.7 },
+      { x: 2420, y: 0,   h: 180, on: 1.3, off: 0.9 },
+      { x: 2600, y: 0,   h: 350, on: 1.0, off: 0.75 },
+      { x: 2760, y: 0,   h: 350, on: 1.0, off: 0.75, t0: 0.875 },
+      { x: 3300, y: 308, w: 50, on: 1.5, off: 1.1 },
+      { x: 3520, y: 0,   h: 330, on: 0.8, off: 0.9 }
     ],
     stars: [ { x: 815, y: 240 }, { x: 1740, y: 205 }, { x: 2490, y: 140 } ],
     // "boxes": cajas para golpear con la cabeza desde abajo. Dan "prize" diamantes, una sola vez por dispositivo.

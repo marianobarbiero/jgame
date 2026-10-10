@@ -3,7 +3,7 @@
 
 /* ---------- Mundo ---------- */
 const H = 450, LAVA_Y = 402, RISE_DELAY = 1.5;
-const DROP_SHAKE = 0.5, DROP_G = 1400, DROP_LEN = 22;
+const DROP_SHAKE = 0.35, DROP_G = 1400, DROP_LEN = 22;
 const MW = 26, MH = 24, STOMP_V = 380;
 const FIRE_V = 150, FIRE_RANGE = 300, FIRE_SIGHT = 440, FIRE_WARN = 0.9;
 const LASER_WARN = 0.6;
@@ -60,7 +60,8 @@ function tick(g, inp, dt) {
 
   // En los niveles con "rise" la lava sube de a poco, hasta quedar justo debajo de la meta.
   g.t += dt;
-  if (level.rise && g.t > RISE_DELAY) g.lava = Math.max(level.goalY + 25, g.lava - level.rise * dt);
+  // "riseTo": hasta dónde sube (si no está, frena justo debajo de la meta).
+  if (level.rise && g.t > RISE_DELAY) g.lava = Math.max(level.riseTo !== undefined ? level.riseTo : level.goalY + 25, g.lava - level.rise * dt);
   // En los niveles con "crush" un techo de pinchos baja de a poco hasta el piso.
   if (level.crush && g.t > RISE_DELAY) g.ceil = Math.min(LAVA_Y, g.ceil + level.crush.speed * dt);
   // En los niveles con "floor" un piso de pinchos sube desde la lava hasta cerrarse contra el techo.
