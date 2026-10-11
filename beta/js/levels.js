@@ -360,7 +360,7 @@ function buildCustom(ed) {
         right = Math.max(right, x + n - 1); x += n - 1;
       } else if (k === 'spike') lv.spikes.push({ x: x * ED + 4, y: (y + 1) * ED, w: ED - 8, h: 22 });
       else if (k === 'star' && lv.stars.length < 3) lv.stars.push({ x: x * ED + ED / 2, y: y * ED + ED / 2 });
-      else if (k === 'mon' || k === 'fire') {                // camina por la piedra de abajo, sin atravesar paredes
+      else if (k === 'mon' || k === 'fire' || k === 'zombie') {   // camina por la piedra de abajo, sin atravesar paredes
         let a = x, b = x;
         const floor = c => at(c, y + 1) === 'rock' && at(c, y) !== 'rock';
         if (floor(x)) { while (floor(a - 1)) a--; while (floor(b + 1)) b++; }
@@ -368,7 +368,10 @@ function buildCustom(ed) {
         m.sx = Math.max(m.x0, Math.min(m.x1, x * ED + (ED - MW) / 2));   // arranca donde lo pusiste
         if (!floor(x)) m.x0 = m.x1 = m.sx;
         if (k === 'fire') m.fire = 2.8;
+        if (k === 'zombie') Object.assign(m, { zombie: true, speed: 25, chase: 65, h: 40 });   // como los del nivel 10
         lv.monsters.push(m);
+      } else if (k === 'bomb') {                              // bomba apoyada en el piso del casillero, como las del nivel 9
+        lv.bombs.push({ x: x * ED + ED / 2, y: (y + 1) * ED });
       } else if (k === 'box50' || k === 'box80') {             // caja para golpear con la cabeza, centrada en el casillero
         lv.boxes.push({ x: x * ED + 5, y: y * ED + 5, w: 30, h: 30, prize: k === 'box50' ? 50 : 80 });
       } else if (k === 'laser') {                            // de arriba hasta la primera piedra de esa columna
