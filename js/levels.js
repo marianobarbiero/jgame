@@ -3,7 +3,8 @@
 
 const LEVELS = [
   {
-    name: 'Nivel 1', sub: 'Las piedritas', w: 2680,
+    name: 'Nivel 1', sub: 'Las piedritas', w: 2680, rise: 2.5, riseTo: 200,
+    banner: '¡La lava sube! ¡Apurate!',
     sky: ['#120d18', '#261426', '#5a2414'],
     // Sin "h": columna de piedra que sale de la lava. Con "h": piedra flotante.
     platforms: [
@@ -29,7 +30,8 @@ const LEVELS = [
     start: { x: 70, y: 330 - PH }, goalX: 2560, goalY: 335
   },
   {
-    name: 'Nivel 2', sub: 'Los pinchos', w: 2790,
+    name: 'Nivel 2', sub: 'Los pinchos', w: 2790, rise: 2.8, riseTo: 200,
+    banner: '¡La lava sube! ¡Apurate!',
     sky: ['#0e0f1f', '#1f1a3a', '#5a1f1c'],
     platforms: [
       { x: 0,    y: 330, w: 220 },
@@ -61,7 +63,8 @@ const LEVELS = [
     start: { x: 70, y: 330 - PH }, goalX: 2710, goalY: 330
   },
   {
-    name: 'Nivel 3', sub: 'Pinchos altos', w: 2940,
+    name: 'Nivel 3', sub: 'Pinchos altos', w: 2940, rise: 2.8, riseTo: 200,
+    banner: '¡La lava sube! ¡Apurate!',
     sky: ['#0b1512', '#14291f', '#5a2414'],
     platforms: [
       { x: 0,    y: 330, w: 420 },
@@ -91,7 +94,7 @@ const LEVELS = [
   },
   {
     // "rise": cuántos píxeles por segundo sube la lava. El camino va subiendo hacia la meta.
-    name: 'Nivel 4', sub: 'La lava sube', w: 3410, rise: 4.5,
+    name: 'Nivel 4', sub: 'La lava sube', w: 3410, rise: 5.0,
     banner: '¡La lava sube! ¡Apurate!', hint: 'Saltá las bolas de fuego',
     sky: ['#1a0b0d', '#34140f', '#6a2a12'],
     platforms: [
@@ -116,9 +119,9 @@ const LEVELS = [
     ],
     // Monstruitos de fuego: caminan de x0 a x1 y cada "fire" segundos escupen una bola de fuego hacia J.
     monsters: [
-      { x0: 940,  x1: 1040, y: 290, speed: 40, dir: -1, fire: 3.0 },
-      { x0: 2270, x1: 2370, y: 200, speed: 50, dir: -1, fire: 2.8 },
-      { x0: 3060, x1: 3160, y: 170, speed: 60, dir: 1, fire: 2.6 }
+      { x0: 940,  x1: 1040, y: 290, speed: 55, dir: -1, fire: 2.6 },
+      { x0: 2270, x1: 2370, y: 200, speed: 65, dir: -1, fire: 2.5 },
+      { x0: 3060, x1: 3160, y: 170, speed: 75, dir: 1, fire: 2.4 }
     ],
     stars: [ { x: 1225, y: 320 }, { x: 1572, y: 155 }, { x: 2872, y: 75 } ],
     start: { x: 60, y: 340 - PH }, goalX: 3320, goalY: 170
@@ -126,7 +129,7 @@ const LEVELS = [
   {
     // "crush": techo de pinchos. Arranca con las puntas en y0 y baja "speed" píxeles por segundo.
     // El camino va bajando, así J siempre tiene lugar para saltar si no se queda quieto.
-    name: 'Nivel 5', sub: 'Techo de pinchos', w: 3695, crush: { y0: 14, speed: 2.6 },
+    name: 'Nivel 5', sub: 'Techo de pinchos', w: 3695, crush: { y0: 14, speed: 3.2 },
     banner: '¡Los pinchos bajan! ¡Apurate!', hint: 'Ojo: los pinchos rojos se caen',
     sky: ['#0d0d16', '#1c1b2e', '#5a2414'],
     platforms: [
@@ -152,7 +155,7 @@ const LEVELS = [
     // Techo que baja ("crush") y piso de pinchos que sube ("floor") hasta cerrarse.
     // El camino va por el medio, casi a la misma altura todo el tiempo.
     name: 'Nivel 6', sub: 'La trampa', w: 3085,
-    crush: { y0: 14, speed: 3.6 }, floor: { y0: 410, speed: 2.85 },
+    crush: { y0: 14, speed: 4.2 }, floor: { y0: 410, speed: 3.3 },
     banner: '¡Los pinchos se cierran! ¡Apurate!',
     sky: ['#120b18', '#231233', '#5a2414'],
     platforms: [
@@ -200,12 +203,12 @@ const LEVELS = [
       { x: 3550, y: 330, w: 14, h: 84 }
     ],
     monsters: [
-      { x0: 200,  x1: 320,  y: 330, speed: 45, dir: -1 },
-      { x0: 800,  x1: 930,  y: 320, speed: 50, dir: -1 },
-      { x0: 1600, x1: 1790, y: 300, speed: 70, dir: 1 },
-      { x0: 2405, x1: 2465, y: 180, speed: 35, dir: 1 },
-      { x0: 2730, x1: 2780, y: 350, speed: 40, dir: -1 },
-      { x0: 3250, x1: 3360, y: 330, speed: 60, dir: -1 }
+      { x0: 200,  x1: 320,  y: 330, speed: 63, dir: -1 },
+      { x0: 800,  x1: 930,  y: 320, speed: 70, dir: -1 },
+      { x0: 1600, x1: 1790, y: 300, speed: 98, dir: 1 },
+      { x0: 2405, x1: 2465, y: 180, speed: 44, dir: 1 },
+      { x0: 2730, x1: 2780, y: 350, speed: 56, dir: -1 },
+      { x0: 3250, x1: 3360, y: 330, speed: 84, dir: -1 }
     ],
     stars: [ { x: 880, y: 235 }, { x: 1700, y: 215 }, { x: 2475, y: 140 } ],
     start: { x: 60, y: 330 - PH }, goalX: 3690, goalY: 330
@@ -230,31 +233,98 @@ const LEVELS = [
     ],
     spikes: [],
     lasers: [
-      { x: 300,  y: 0,   h: 330, on: 1.2, off: 1.6 },
+      { x: 300,  y: 0,   h: 330, on: 1.2, off: 1.2 },
       { x: 790,  y: 304, w: 50 },
-      { x: 1000, y: 0,   h: 320, on: 1.0, off: 1.4, t0: 0.5 },
+      { x: 1000, y: 0,   h: 320, on: 1.0, off: 1.05, t0: 0.5 },
       { x: 1120, y: 304, w: 50 },
-      { x: 1650, y: 238, w: 180, on: 1.6, off: 1.4 },
-      { x: 1990, y: 0,   h: 300, on: 1.2, off: 1.4, t0: 0.7 },
-      { x: 2420, y: 0,   h: 180, on: 1.3, off: 1.2 },
-      { x: 2600, y: 0,   h: 350, on: 1.0, off: 1.0 },
-      { x: 2760, y: 0,   h: 350, on: 1.0, off: 1.0, t0: 1.0 },
-      { x: 3300, y: 308, w: 50, on: 1.5, off: 1.5 },
-      { x: 3520, y: 0,   h: 330, on: 0.8, off: 1.2 }
+      { x: 1650, y: 238, w: 180, on: 1.6, off: 1.05 },
+      { x: 1990, y: 0,   h: 300, on: 1.2, off: 1.05, t0: 0.7 },
+      { x: 2420, y: 0,   h: 180, on: 1.3, off: 0.9 },
+      { x: 2600, y: 0,   h: 350, on: 1.0, off: 0.75 },
+      { x: 2760, y: 0,   h: 350, on: 1.0, off: 0.75, t0: 0.875 },
+      { x: 3300, y: 308, w: 50, on: 1.5, off: 1.1 },
+      { x: 3520, y: 0,   h: 330, on: 0.8, off: 0.9 }
     ],
     stars: [ { x: 815, y: 240 }, { x: 1740, y: 205 }, { x: 2490, y: 140 } ],
     // "boxes": cajas para golpear con la cabeza desde abajo. Dan "prize" diamantes, una sola vez por dispositivo.
     // Esta está en el camino de arriba (la piedra flotante), arriba de la tercera estrella.
     boxes: [ { x: 2475, y: 50, w: 30, h: 30, prize: 50 } ],
     start: { x: 60, y: 330 - PH }, goalX: 3670, goalY: 330
+  },
+  {
+    // "bombs": bombas apoyadas en una piedra ("y" = borde de arriba de la piedra, "x" = centro de la bomba).
+    // "lives": vidas. Al perderlas todas se pierde 1 diamante y el nivel empieza de cero.
+    name: 'Nivel 9', sub: 'Las bombas', w: 3600, lives: 3,
+    banner: '¡Cuidado con las bombas!', hint: 'Si se prende la mecha, frená', music: true,
+    sky: ['#14100a', '#2e2412', '#5a2414'],
+    platforms: [
+      { x: 0,    y: 330, w: 400 },
+      { x: 480,  y: 330, w: 90 },
+      { x: 650,  y: 320, w: 500 },
+      { x: 1235, y: 300, w: 80 },
+      { x: 1400, y: 300, w: 500 },
+      { x: 1985, y: 330, w: 80 },
+      { x: 2150, y: 320, w: 600 },
+      { x: 2840, y: 320, w: 80 },
+      { x: 3005, y: 330, w: 595 }
+    ],
+    spikes: [
+      { x: 1500, y: 300, w: 40 },
+      { x: 2405, y: 320, w: 30 }
+    ],
+    bombs: [
+      { x: 300,  y: 330 },
+      { x: 800,  y: 320 },
+      { x: 1000, y: 320 },
+      { x: 1700, y: 300 },
+      { x: 2300, y: 320 },
+      { x: 2580, y: 320 },
+      { x: 3200, y: 330 },
+      { x: 3380, y: 330 }
+    ],
+    stars: [ { x: 800, y: 240 }, { x: 1960, y: 215 }, { x: 2420, y: 230 } ],
+    start: { x: 60, y: 330 - PH }, goalX: 3520, goalY: 330
+  },
+  {
+    // Zombis: monstruos con "zombie: true". Caminan despacio ("speed") y cuando ven a J lo persiguen ("chase").
+    // Si agarran a J, se pierden 5 diamantes. Se los aplasta saltándoles encima. Mismo recorrido que el nivel 7.
+    name: 'Nivel 10', sub: 'Los zombis', w: 3780,
+    banner: '¡Zombis! Si te agarran, perdés 5 diamantes', hint: 'Saltales encima o por arriba', music: true,
+    sky: ['#0b140c', '#16261a', '#4a2a14'],
+    platforms: [
+      { x: 0,    y: 330, w: 420 },
+      { x: 500,  y: 330, w: 90 },
+      { x: 670,  y: 320, w: 560 },
+      { x: 1310, y: 300, w: 80 },
+      { x: 1470, y: 300, w: 620 },
+      { x: 2170, y: 270, w: 90 },
+      { x: 2305, y: 180, w: 190, h: 20 },
+      { x: 2295, y: 350, w: 585 },
+      { x: 2960, y: 330, w: 80 },
+      { x: 3120, y: 330, w: 660 }
+    ],
+    spikes: [],
+    monsters: [
+      { x0: 200,  x1: 294,  y: 330, speed: 25, chase: 60, dir: -1, zombie: true },
+      { x0: 760,  x1: 1100, y: 320, speed: 25, chase: 65, dir: -1, zombie: true },
+      { x0: 1560, x1: 1740, y: 300, speed: 25, chase: 70, dir: 1,  zombie: true },
+      { x0: 1800, x1: 1960, y: 300, speed: 25, chase: 70, dir: -1, zombie: true },
+      { x0: 2405, x1: 2465, y: 180, speed: 20, chase: 40, dir: 1,  zombie: true },
+      { x0: 2620, x1: 2750, y: 350, speed: 25, chase: 65, dir: -1, zombie: true },
+      { x0: 3250, x1: 3550, y: 330, speed: 25, chase: 75, dir: -1, zombie: true }
+    ],
+    stars: [ { x: 880, y: 235 }, { x: 1700, y: 215 }, { x: 2475, y: 140 } ],
+    start: { x: 60, y: 330 - PH }, goalX: 3690, goalY: 330
   }
 ];
 LEVELS.forEach(lv => {
   lv.platforms.forEach(p => { p.float = !!p.h; if (!p.h) p.h = H - p.y + 40; });
   lv.drops = lv.drops || [];
   lv.monsters = lv.monsters || [];
+  lv.monsters.forEach(m => { if (m.zombie && !m.h) m.h = 40; });   // zombis del alto de J
   lv.lasers = lv.lasers || [];
   lv.boxes = lv.boxes || [];
+  lv.bombs = lv.bombs || [];
   // Hasta dónde cae cada pincho flojo: la piedra que tiene abajo, o la lava.
   lv.dropFloor = lv.drops.map(x => {
     const under = lv.platforms.filter(p => x >= p.x && x <= p.x + p.w).map(p => p.y);
@@ -277,7 +347,7 @@ function defaultEd() {
 function buildCustom(ed) {
   const at = (x, y) => ed.cells[x + ',' + y];
   const lv = { name: ed.name || 'Tu nivel', sub: 'Lo hiciste vos', custom: true, banner: '¡Tu nivel!',
-    sky: ['#0f1a17', '#1c2b25', '#5a2414'], platforms: [], spikes: [], stars: [], monsters: [], lasers: [], boxes: [], drops: [], dropFloor: [] };
+    sky: ['#0f1a17', '#1c2b25', '#5a2414'], platforms: [], spikes: [], stars: [], monsters: [], lasers: [], boxes: [], bombs: [], drops: [], dropFloor: [] };
   let right = Math.max(ed.start[0], ed.goal[0]);
   for (let y = 0; y < ED_ROWS; y++) {
     for (let x = 0; x < ED_COLS; x++) {
@@ -290,7 +360,7 @@ function buildCustom(ed) {
         right = Math.max(right, x + n - 1); x += n - 1;
       } else if (k === 'spike') lv.spikes.push({ x: x * ED + 4, y: (y + 1) * ED, w: ED - 8, h: 22 });
       else if (k === 'star' && lv.stars.length < 3) lv.stars.push({ x: x * ED + ED / 2, y: y * ED + ED / 2 });
-      else if (k === 'mon' || k === 'fire') {                // camina por la piedra de abajo, sin atravesar paredes
+      else if (k === 'mon' || k === 'fire' || k === 'zombie') {   // camina por la piedra de abajo, sin atravesar paredes
         let a = x, b = x;
         const floor = c => at(c, y + 1) === 'rock' && at(c, y) !== 'rock';
         if (floor(x)) { while (floor(a - 1)) a--; while (floor(b + 1)) b++; }
@@ -298,7 +368,10 @@ function buildCustom(ed) {
         m.sx = Math.max(m.x0, Math.min(m.x1, x * ED + (ED - MW) / 2));   // arranca donde lo pusiste
         if (!floor(x)) m.x0 = m.x1 = m.sx;
         if (k === 'fire') m.fire = 2.8;
+        if (k === 'zombie') Object.assign(m, { zombie: true, speed: 25, chase: 65, h: 40 });   // como los del nivel 10
         lv.monsters.push(m);
+      } else if (k === 'bomb') {                              // bomba apoyada en el piso del casillero, como las del nivel 9
+        lv.bombs.push({ x: x * ED + ED / 2, y: (y + 1) * ED });
       } else if (k === 'box50' || k === 'box80') {             // caja para golpear con la cabeza, centrada en el casillero
         lv.boxes.push({ x: x * ED + 5, y: y * ED + 5, w: 30, h: 30, prize: k === 'box50' ? 50 : 80 });
       } else if (k === 'laser') {                            // de arriba hasta la primera piedra de esa columna

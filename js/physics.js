@@ -3,10 +3,14 @@
 
 /* ---------- Mundo ---------- */
 const H = 450, LAVA_Y = 402, RISE_DELAY = 1.5;
-const DROP_SHAKE = 0.5, DROP_G = 1400, DROP_LEN = 22;
+const DROP_SHAKE = 0.35, DROP_G = 1400, DROP_LEN = 22;
 const MW = 26, MH = 24, STOMP_V = 380;
 const FIRE_V = 150, FIRE_RANGE = 300, FIRE_SIGHT = 440, FIRE_WARN = 0.9;
 const LASER_WARN = 0.6;
+// Bombas: se prenden cuando J se acerca (BOMB_SIGHT), explotan BOMB_FUSE segundos después y alcanzan hasta BOMB_R.
+const BOMB_SIGHT = 110, BOMB_FUSE = 0.9, BOMB_R = 70;
+// Zombis: si ven a J (cerca y a la misma altura) lo persiguen a "chase" px/s, sin salirse de su piedra.
+const ZOMBIE_SIGHT = 240;
 const G = 1500, JUMP_V = 560, RUN = 185, MAX_FALL = 900;
 const PW = 22, PH = 42, STEP = 1 / 120;
 
@@ -19,7 +23,8 @@ function newRun() {
     floor: level.floor ? level.floor.y0 : 9999,
     drops: level.drops.map(x => ({ x, state: 'idle', t: 0, y: 0, vy: 0 })),
     monsters: level.monsters.map(m => ({ x: m.sx !== undefined ? m.sx : m.dir > 0 ? m.x0 : m.x1, dir: m.dir, alive: true, fireT: FIRE_WARN + 0.4, sight: false })),
-    fires: [], boxes: level.boxes.map(() => false) };
+    fires: [], boxes: level.boxes.map(() => false),
+    bombs: level.bombs.map(() => ({ state: 'idle', t: 0 })) };
 }
 
 function hits(p, pl) {
@@ -60,7 +65,8 @@ function tick(g, inp, dt) {
 
   // En los niveles con "rise" la lava sube de a poco, hasta quedar justo debajo de la meta.
   g.t += dt;
-  if (level.rise && g.t > RISE_DELAY) g.lava = Math.max(level.goalY + 25, g.lava - level.rise * dt);
+  // "riseTo": hasta dónde sube (si no está, frena justo debajo de la meta).
+  if (level.rise && g.t > RISE_DELAY) g.lava = Math.max(level.riseTo !== undefined ? level.riseTo : level.goalY + 25, g.lava - level.rise * dt);
   // En los niveles con "crush" un techo de pinchos baja de a poco hasta el piso.
   if (level.crush && g.t > RISE_DELAY) g.ceil = Math.min(LAVA_Y, g.ceil + level.crush.speed * dt);
   // En los niveles con "floor" un piso de pinchos sube desde la lava hasta cerrarse contra el techo.
@@ -143,14 +149,24 @@ function tick(g, inp, dt) {
       }
     }
     const charging = def.fire && m.sight && m.fireT < FIRE_WARN;
-    if (def.speed && !charging) {
+    if (def.zombie) {
+      const dx = (p.x + PW / 2) - (m.x + MW / 2);
+      m.sight = Math.abs(dx) < ZOMBIE_SIGHT && Math.abs(p.y + PH - def.y) < 60;
+      if (m.sight) {                                            // lo persigue
+        m.dir = dx > 0 ? 1 : -1;
+        if (Math.abs(dx) > 4) m.x = Math.max(def.x0, Math.min(def.x1, m.x + m.dir * def.chase * dt));
+      } else {                                                  // camina despacio de un lado a otro
+        m.x += m.dir * def.speed * dt;
+        if (m.x <= def.x0) { m.x = def.x0; m.dir = 1; } else if (m.x >= def.x1) { m.x = def.x1; m.dir = -1; }
+      }
+    } else if (def.speed && !charging) {
       m.x += m.dir * def.speed * dt;
       if (m.x <= def.x0) { m.x = def.x0; m.dir = 1; } else if (m.x >= def.x1) { m.x = def.x1; m.dir = -1; }
     }
-    const top = def.y - MH;
+    const top = def.y - (def.h || MH);                         // los zombis son más altos (h: 40)
     if (p.x + PW - 3 > m.x + 2 && p.x + 3 < m.x + MW - 2 && p.y + PH > top + 2 && p.y < def.y) {
       if (p.vy > 0 && p.y + PH - top < 16) { m.alive = false; p.vy = -STOMP_V; p.onGround = false; ev.push('stomp' + i); }
-      else { g.status = 'dead'; ev.push('bitten'); return ev; }
+      else { g.status = 'dead'; ev.push(def.zombie ? 'zombied' : 'bitten'); return ev; }
     }
   }
   // Bolas de fuego: van derecho hacia la izquierda, a la altura de las rodillas de J. Se apagan solas o contra una piedra.
@@ -186,6 +202,20 @@ function tick(g, inp, dt) {
   }
   for (const lz of level.lasers) {
     if (laserOn(lz, g.t) && laserHit(p, lz)) { g.status = 'dead'; ev.push('zapped'); return ev; }
+  }
+  // Bombas: idle -> (J cerca) lit -> (se acaba la mecha) boom. Si J está a menos de BOMB_R, pierde.
+  for (let i = 0; i < g.bombs.length; i++) {
+    const b = g.bombs[i], d = level.bombs[i], by = d.y - 10;
+    const dx = cx - d.x, dy = cy - by;
+    if (b.state === 'idle') {
+      if (Math.abs(dx) < BOMB_SIGHT && dy > -110 && dy < 40) { b.state = 'lit'; b.t = BOMB_FUSE; ev.push('fuse' + i); }
+    } else if (b.state === 'lit') {
+      b.t -= dt;
+      if (b.t <= 0) {
+        b.state = 'gone'; ev.push('boom' + i);
+        if (dx * dx + dy * dy < BOMB_R * BOMB_R) { g.status = 'dead'; ev.push('blown'); return ev; }
+      }
+    }
   }
   if (p.y < g.ceil - 2 || p.y + PH > g.floor + 2) { g.status = 'dead'; ev.push('spiked'); return ev; }
   if (p.y + PH > g.lava + 16) { g.status = 'dead'; ev.push('dead'); }
