@@ -213,6 +213,7 @@ const OUCH = {
   dead: ['¡Uy, quema!', '¡A la lava!', '¡Qué calor!'],
   spiked: ['¡Pinchazo!', '¡Auch, pinchos!', '¡Eso pincha!'],
   bitten: ['¡El monstruo te comió!', '¡Ñam!', '¡Cuidado con el monstruo!'],
+  zombied: ['¡Te agarró un zombi!', '¡Cerebrooos!', '¡Un zombi!'],
   burned: ['¡Te quemaste!', '¡Bola de fuego!', '¡Fuego, fuego!'],
   zapped: ['¡Bzzz! ¡Láser!', '¡Zap!', '¡Esperá que se apague!'],
   blown: ['¡Bum!', '¡Kabum!', '¡Frená cuando se prende la mecha!']
@@ -294,6 +295,13 @@ function handle(ev) {
       state = 'dead'; deadT = 1.0; shake = reduceMotion ? 0 : 7;
       sfx.dead();
       burst(p.x + PW / 2, p.y + PH / 2, 22, ['#ff7a1a', '#ffd23f', '#e2540f', '#2a1420'], 230, 160);
+    } else if (e === 'zombied') {                         // te agarró un zombi: -5 diamantes
+      state = 'dead'; deadT = 1.0; shake = reduceMotion ? 0 : 7;
+      sfx.dead(); beep(110, 0.5, 'sawtooth', 0.05, -40, 0.1);
+      burst(p.x + PW / 2, p.y + PH / 2, 22, ['#5fae4a', '#2e6b2a', '#e8ecf5', '#3a6fb0'], 230, 160);
+      const lost = Math.min(5, diamonds);
+      if (lost) { diamonds -= lost; store.set('diamonds', diamonds); renderHud(); }
+      toast = { t: 4, text: lost ? '-' + lost + (lost === 1 ? ' diamante' : ' diamantes') : '¡Uy, un zombi!', sub: 'Tenés ' + diamonds + (diamonds === 1 ? ' diamante.' : ' diamantes.') };
     } else if (e === 'spiked' || e === 'bitten') {
       state = 'dead'; deadT = 1.0; shake = reduceMotion ? 0 : 7;
       sfx.dead();

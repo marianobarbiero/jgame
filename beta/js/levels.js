@@ -284,12 +284,44 @@ const LEVELS = [
     ],
     stars: [ { x: 800, y: 240 }, { x: 1960, y: 215 }, { x: 2420, y: 230 } ],
     start: { x: 60, y: 330 - PH }, goalX: 3520, goalY: 330
+  },
+  {
+    // Zombis: monstruos con "zombie: true". Caminan despacio ("speed") y cuando ven a J lo persiguen ("chase").
+    // Si agarran a J, se pierden 5 diamantes. Se los aplasta saltándoles encima. Mismo recorrido que el nivel 7.
+    name: 'Nivel 10', sub: 'Los zombis', w: 3780,
+    banner: '¡Zombis! Si te agarran, perdés 5 diamantes', hint: 'Saltales encima o por arriba', music: true,
+    sky: ['#0b140c', '#16261a', '#4a2a14'],
+    platforms: [
+      { x: 0,    y: 330, w: 420 },
+      { x: 500,  y: 330, w: 90 },
+      { x: 670,  y: 320, w: 560 },
+      { x: 1310, y: 300, w: 80 },
+      { x: 1470, y: 300, w: 620 },
+      { x: 2170, y: 270, w: 90 },
+      { x: 2305, y: 180, w: 190, h: 20 },
+      { x: 2295, y: 350, w: 585 },
+      { x: 2960, y: 330, w: 80 },
+      { x: 3120, y: 330, w: 660 }
+    ],
+    spikes: [],
+    monsters: [
+      { x0: 200,  x1: 294,  y: 330, speed: 25, chase: 60, dir: -1, zombie: true },
+      { x0: 760,  x1: 1100, y: 320, speed: 25, chase: 65, dir: -1, zombie: true },
+      { x0: 1560, x1: 1740, y: 300, speed: 25, chase: 70, dir: 1,  zombie: true },
+      { x0: 1800, x1: 1960, y: 300, speed: 25, chase: 70, dir: -1, zombie: true },
+      { x0: 2405, x1: 2465, y: 180, speed: 20, chase: 40, dir: 1,  zombie: true },
+      { x0: 2620, x1: 2750, y: 350, speed: 25, chase: 65, dir: -1, zombie: true },
+      { x0: 3250, x1: 3550, y: 330, speed: 25, chase: 75, dir: -1, zombie: true }
+    ],
+    stars: [ { x: 880, y: 235 }, { x: 1700, y: 215 }, { x: 2475, y: 140 } ],
+    start: { x: 60, y: 330 - PH }, goalX: 3690, goalY: 330
   }
 ];
 LEVELS.forEach(lv => {
   lv.platforms.forEach(p => { p.float = !!p.h; if (!p.h) p.h = H - p.y + 40; });
   lv.drops = lv.drops || [];
   lv.monsters = lv.monsters || [];
+  lv.monsters.forEach(m => { if (m.zombie && !m.h) m.h = 40; });   // zombis del alto de J
   lv.lasers = lv.lasers || [];
   lv.boxes = lv.boxes || [];
   lv.bombs = lv.bombs || [];

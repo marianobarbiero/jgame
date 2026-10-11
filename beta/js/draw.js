@@ -112,9 +112,31 @@ function drawFloorSpikes() {
   }
 }
 
+// Zombi del alto de J: cabeza verde, remera celeste, pantalón azul y los brazos para adelante (mira hacia donde camina).
+function drawZombie(m, def) {
+  const x = Math.round(m.x), y = def.y - def.h;                     // y = arriba de la cabeza
+  const f = m.dir > 0 ? 1 : -1, walk = reduceMotion ? 0 : Math.sin(time * (m.sight ? 12 : 6) + def.x0);
+  ctx.fillStyle = '#2b3a8f';                                        // piernas
+  ctx.fillRect(x + 5 + (walk > 0 ? 2 : 0), y + 28, 7, 12); ctx.fillRect(x + 14 - (walk > 0 ? 2 : 0), y + 28, 7, 12);
+  ctx.fillStyle = '#1c2466'; ctx.fillRect(x + 5 + (walk > 0 ? 2 : 0), y + 37, 7, 3); ctx.fillRect(x + 14 - (walk > 0 ? 2 : 0), y + 37, 7, 3);
+  ctx.fillStyle = '#2fa8c9'; ctx.fillRect(x + 3, y + 14, 20, 15);   // remera
+  ctx.fillStyle = '#5fae4a';                                        // brazos estirados para adelante
+  if (f > 0) ctx.fillRect(x + 17, y + 15, 15, 5); else ctx.fillRect(x - 6, y + 15, 15, 5);
+  ctx.fillStyle = '#2fa8c9'; if (f > 0) ctx.fillRect(x + 17, y + 15, 5, 5); else ctx.fillRect(x + 4, y + 15, 5, 5);
+  ctx.fillStyle = '#5fae4a'; ctx.fillRect(x + 4, y, 18, 15);        // cabeza
+  ctx.fillStyle = '#4a8f3a'; ctx.fillRect(x + 4, y, 18, 4); ctx.fillRect(x + 4, y + 11, 3, 4);   // pelo y sombra
+  ctx.fillStyle = '#1c0d12';                                        // ojos y boca
+  const ex = f > 0 ? 3 : 0;
+  ctx.fillRect(x + 6 + ex, y + 6, 4, 3); ctx.fillRect(x + 13 + ex, y + 6, 4, 3); ctx.fillRect(x + 8 + ex, y + 11, 7, 2);
+  if (m.sight && !reduceMotion && Math.sin(time * 8) > 0) {        // ojos rojos cuando te ve
+    ctx.fillStyle = '#e5484d'; ctx.fillRect(x + 7 + ex, y + 7, 2, 1); ctx.fillRect(x + 14 + ex, y + 7, 2, 1);
+  }
+}
+
 function drawMonster(m, def) {
   if (!m.alive || m.x + MW < cam - 4 || m.x > cam + viewW + 4) return;
   const x = Math.round(m.x), y = def.y - MH;
+  if (def.zombie) { drawZombie(m, def); return; }
   const charging = def.fire && m.sight && m.fireT < FIRE_WARN;
   const step = reduceMotion || !def.speed || charging ? 0 : Math.sin(time * 10 + def.x0);
   if (def.fire) {                                              // llamita en la cabeza
