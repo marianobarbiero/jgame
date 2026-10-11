@@ -250,6 +250,40 @@ const LEVELS = [
     // Esta está en el camino de arriba (la piedra flotante), arriba de la tercera estrella.
     boxes: [ { x: 2475, y: 50, w: 30, h: 30, prize: 50 } ],
     start: { x: 60, y: 330 - PH }, goalX: 3670, goalY: 330
+  },
+  {
+    // "bombs": bombas apoyadas en una piedra ("y" = borde de arriba de la piedra, "x" = centro de la bomba).
+    // "lives": vidas. Al perderlas todas se pierde 1 diamante y el nivel empieza de cero.
+    name: 'Nivel 9', sub: 'Las bombas', w: 3600, lives: 3,
+    banner: '¡Cuidado con las bombas!', hint: 'Si se prende la mecha, frená', music: true,
+    sky: ['#14100a', '#2e2412', '#5a2414'],
+    platforms: [
+      { x: 0,    y: 330, w: 400 },
+      { x: 480,  y: 330, w: 90 },
+      { x: 650,  y: 320, w: 500 },
+      { x: 1235, y: 300, w: 80 },
+      { x: 1400, y: 300, w: 500 },
+      { x: 1985, y: 330, w: 80 },
+      { x: 2150, y: 320, w: 600 },
+      { x: 2840, y: 320, w: 80 },
+      { x: 3005, y: 330, w: 595 }
+    ],
+    spikes: [
+      { x: 1500, y: 300, w: 40 },
+      { x: 2405, y: 320, w: 30 }
+    ],
+    bombs: [
+      { x: 300,  y: 330 },
+      { x: 800,  y: 320 },
+      { x: 1000, y: 320 },
+      { x: 1700, y: 300 },
+      { x: 2300, y: 320 },
+      { x: 2580, y: 320 },
+      { x: 3200, y: 330 },
+      { x: 3380, y: 330 }
+    ],
+    stars: [ { x: 800, y: 240 }, { x: 1960, y: 215 }, { x: 2420, y: 230 } ],
+    start: { x: 60, y: 330 - PH }, goalX: 3520, goalY: 330
   }
 ];
 LEVELS.forEach(lv => {
@@ -258,6 +292,7 @@ LEVELS.forEach(lv => {
   lv.monsters = lv.monsters || [];
   lv.lasers = lv.lasers || [];
   lv.boxes = lv.boxes || [];
+  lv.bombs = lv.bombs || [];
   // Hasta dónde cae cada pincho flojo: la piedra que tiene abajo, o la lava.
   lv.dropFloor = lv.drops.map(x => {
     const under = lv.platforms.filter(p => x >= p.x && x <= p.x + p.w).map(p => p.y);
@@ -280,7 +315,7 @@ function defaultEd() {
 function buildCustom(ed) {
   const at = (x, y) => ed.cells[x + ',' + y];
   const lv = { name: ed.name || 'Tu nivel', sub: 'Lo hiciste vos', custom: true, banner: '¡Tu nivel!',
-    sky: ['#0f1a17', '#1c2b25', '#5a2414'], platforms: [], spikes: [], stars: [], monsters: [], lasers: [], boxes: [], drops: [], dropFloor: [] };
+    sky: ['#0f1a17', '#1c2b25', '#5a2414'], platforms: [], spikes: [], stars: [], monsters: [], lasers: [], boxes: [], bombs: [], drops: [], dropFloor: [] };
   let right = Math.max(ed.start[0], ed.goal[0]);
   for (let y = 0; y < ED_ROWS; y++) {
     for (let x = 0; x < ED_COLS; x++) {

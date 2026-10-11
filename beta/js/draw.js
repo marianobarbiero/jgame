@@ -212,6 +212,34 @@ function drawBox(bx, i) {
   ctx.fillStyle = '#c9fbff'; ctx.fillRect(cx - 3, cy - 5, 3, 3);
 }
 
+function drawBomb(d, b) {
+  if (d.x < cam - 40 || d.x > cam + viewW + 40) return;
+  const x = d.x, y = d.y;
+  if (b.state === 'gone') {                                       // quemado en la piedra
+    ctx.fillStyle = 'rgba(20,14,26,.55)'; ctx.fillRect(x - 14, y, 28, 3); return;
+  }
+  const lit = b.state === 'lit', flash = lit && !reduceMotion && Math.sin(time * 40) > 0;
+  ctx.fillStyle = '#9da2b6';                                      // borde claro, para que se vea sobre el fondo oscuro
+  ctx.beginPath(); ctx.arc(x, y - 13, 14, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = flash ? '#a3263a' : '#1c1422';                  // la bola
+  ctx.beginPath(); ctx.arc(x, y - 13, 12, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.fillRect(x - 7, y - 20, 4, 4);   // brillo
+  ctx.fillStyle = '#6c7186'; ctx.fillRect(x - 4, y - 30, 8, 4);  // tapita
+  ctx.fillStyle = '#e0b878'; ctx.fillRect(x + 1, y - 36, 3, 6); ctx.fillRect(x + 4, y - 39, 3, 3);   // mecha
+  if (lit) {                                                     // chispas de la mecha prendida
+    const k = reduceMotion ? 0 : Math.sin(time * 30);
+    ctx.fillStyle = '#ffd23f'; ctx.fillRect(x + 5 + k * 2, y - 45, 4, 4);
+    ctx.fillStyle = '#ff7a1a'; ctx.fillRect(x + 9 - k, y - 42 + k, 3, 3); ctx.fillRect(x + 2 + k, y - 48, 3, 3);
+    ctx.fillStyle = '#fff6c9'; ctx.fillRect(x + 6, y - 43, 2, 2);
+  }
+}
+function drawHeart(x, y, on) {
+  ctx.fillStyle = on ? '#e5484d' : 'rgba(255,255,255,.18)';
+  ctx.fillRect(x + 2, y, 5, 3); ctx.fillRect(x + 11, y, 5, 3);
+  ctx.fillRect(x, y + 2, 18, 6); ctx.fillRect(x + 2, y + 8, 14, 3); ctx.fillRect(x + 5, y + 11, 8, 3); ctx.fillRect(x + 8, y + 14, 2, 2);
+  if (on) { ctx.fillStyle = '#ff8a8a'; ctx.fillRect(x + 3, y + 2, 3, 3); }
+}
+
 function drawStar(st, i) {
   const bob = reduceMotion ? 0 : Math.sin(time * 3 + i * 1.7) * 4, cx = st.x, cy = st.y + bob;
   ctx.fillStyle = 'rgba(255,210,63,.16)';
@@ -315,6 +343,7 @@ function draw() {
   level.spikes.forEach(drawSpikes);
   level.lasers.forEach(drawLaser);
   level.boxes.forEach(drawBox);
+  level.bombs.forEach((d, i) => drawBomb(d, run.bombs[i]));
   run.monsters.forEach((m, i) => drawMonster(m, level.monsters[i]));
   run.fires.forEach(drawFire);
   level.stars.forEach((st, i) => { if (!run.stars[i]) drawStar(st, i); });
@@ -357,6 +386,7 @@ function draw() {
     const tx = fmtT(run.t);
     ctx.fillStyle = '#0d0911'; ctx.fillText(tx, viewW - 13, 31);
     ctx.fillStyle = state === 'won' ? '#ffd23f' : '#f6efe6'; ctx.fillText(tx, viewW - 14, 30);
+    if (level.lives) for (let i = 0; i < level.lives; i++) drawHeart(viewW - 14 - (level.lives - i) * 23, 42, i < lives);   // vidas
   }
   if (ouchT > 0 && ouch && (state === 'dead' || state === 'play' || state === 'paused')) {   // mensaje gracioso al perder
     const k = Math.min(1, (OUCH_T - ouchT) * 6);

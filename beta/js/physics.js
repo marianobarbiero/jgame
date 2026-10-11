@@ -7,6 +7,8 @@ const DROP_SHAKE = 0.35, DROP_G = 1400, DROP_LEN = 22;
 const MW = 26, MH = 24, STOMP_V = 380;
 const FIRE_V = 150, FIRE_RANGE = 300, FIRE_SIGHT = 440, FIRE_WARN = 0.9;
 const LASER_WARN = 0.6;
+// Bombas: se prenden cuando J se acerca (BOMB_SIGHT), explotan BOMB_FUSE segundos después y alcanzan hasta BOMB_R.
+const BOMB_SIGHT = 110, BOMB_FUSE = 0.9, BOMB_R = 70;
 const G = 1500, JUMP_V = 560, RUN = 185, MAX_FALL = 900;
 const PW = 22, PH = 42, STEP = 1 / 120;
 
@@ -19,7 +21,8 @@ function newRun() {
     floor: level.floor ? level.floor.y0 : 9999,
     drops: level.drops.map(x => ({ x, state: 'idle', t: 0, y: 0, vy: 0 })),
     monsters: level.monsters.map(m => ({ x: m.sx !== undefined ? m.sx : m.dir > 0 ? m.x0 : m.x1, dir: m.dir, alive: true, fireT: FIRE_WARN + 0.4, sight: false })),
-    fires: [], boxes: level.boxes.map(() => false) };
+    fires: [], boxes: level.boxes.map(() => false),
+    bombs: level.bombs.map(() => ({ state: 'idle', t: 0 })) };
 }
 
 function hits(p, pl) {
@@ -187,6 +190,20 @@ function tick(g, inp, dt) {
   }
   for (const lz of level.lasers) {
     if (laserOn(lz, g.t) && laserHit(p, lz)) { g.status = 'dead'; ev.push('zapped'); return ev; }
+  }
+  // Bombas: idle -> (J cerca) lit -> (se acaba la mecha) boom. Si J está a menos de BOMB_R, pierde.
+  for (let i = 0; i < g.bombs.length; i++) {
+    const b = g.bombs[i], d = level.bombs[i], by = d.y - 10;
+    const dx = cx - d.x, dy = cy - by;
+    if (b.state === 'idle') {
+      if (Math.abs(dx) < BOMB_SIGHT && dy > -110 && dy < 40) { b.state = 'lit'; b.t = BOMB_FUSE; ev.push('fuse' + i); }
+    } else if (b.state === 'lit') {
+      b.t -= dt;
+      if (b.t <= 0) {
+        b.state = 'gone'; ev.push('boom' + i);
+        if (dx * dx + dy * dy < BOMB_R * BOMB_R) { g.status = 'dead'; ev.push('blown'); return ev; }
+      }
+    }
   }
   if (p.y < g.ceil - 2 || p.y + PH > g.floor + 2) { g.status = 'dead'; ev.push('spiked'); return ev; }
   if (p.y + PH > g.lava + 16) { g.status = 'dead'; ev.push('dead'); }

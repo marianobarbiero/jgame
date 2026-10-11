@@ -101,12 +101,12 @@ function startParty() {
   [523, 659, 784, 1047, 2093].forEach(f => beep(f, 0.9, 'triangle', 0.04, 0, 2.2));
 }
 function startRun(i) {
-  stopAuto(); closeEditor(); ouchT = 0;
+  stopAuto(); closeEditor(); ouchT = 0; outOfLives = false;
   if (i === 'custom') { if (!ed) newMine(); useLevel(buildCustom(ed)); cam = 0; parts.length = 0; }
   else if (typeof i === 'number' && i !== levelIdx) { pickLevel(i); cam = 0; parts.length = 0; }
   if (levelIdx >= 0) store.set('level', levelIdx);
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  run = newRun();
+  run = newRun(); lives = level.lives || 0;
   state = 'play'; overlayReady = false; accum = 0; jumpQueued = false;
   startOverlay.hidden = true; winOverlay.hidden = true; pauseOverlay.hidden = true; myOverlay.hidden = true;
   renderHud();
@@ -214,15 +214,28 @@ const OUCH = {
   spiked: ['¡Pinchazo!', '¡Auch, pinchos!', '¡Eso pincha!'],
   bitten: ['¡El monstruo te comió!', '¡Ñam!', '¡Cuidado con el monstruo!'],
   burned: ['¡Te quemaste!', '¡Bola de fuego!', '¡Fuego, fuego!'],
-  zapped: ['¡Bzzz! ¡Láser!', '¡Zap!', '¡Esperá que se apague!']
+  zapped: ['¡Bzzz! ¡Láser!', '¡Zap!', '¡Esperá que se apague!'],
+  blown: ['¡Bum!', '¡Kabum!', '¡Frená cuando se prende la mecha!']
 };
 // El mensaje queda OUCH_T segundos (más que la pausa al perder), para que el nene llegue a leerlo.
 const OUCH_T = 3;
 let ouch = '', ouchT = 0;
+// Vidas (solo en los niveles con "lives", como el 9). Al perderlas todas: -1 diamante y el nivel empieza de cero.
+let lives = 0, outOfLives = false;
+function loseLife() {
+  if (!level.lives) return;
+  lives = Math.max(0, lives - 1);
+  if (lives > 0) return;
+  outOfLives = true;
+  const had = diamonds > 0;
+  if (had) { diamonds -= 1; store.set('diamonds', diamonds); }
+  toast = { t: 4.5, text: '¡Perdiste las ' + level.lives + ' vidas!', sub: had ? '-1 diamante. Empezá de nuevo.' : 'Empezá de nuevo.' };
+  renderHud();
+}
 function handle(ev) {
   for (const e of ev) {
     const p = run.p;
-    if (OUCH[e]) { ouch = OUCH[e][(Math.random() * OUCH[e].length) | 0]; ouchT = OUCH_T; }
+    if (OUCH[e]) { ouch = OUCH[e][(Math.random() * OUCH[e].length) | 0]; ouchT = OUCH_T; loseLife(); }
     if (e === 'jump') {
       sfx.jump();
       burst(p.x + PW / 2, p.y + PH, 4, ['#c3c8d8', '#8a8fa3'], 60, 20);
@@ -262,6 +275,17 @@ function handle(ev) {
     } else if (e.startsWith('fire')) {
       const m = run.monsters[+e.slice(4)];
       if (m.x > cam - 40 && m.x < cam + viewW + 40) { beep(240, 0.18, 'sawtooth', 0.035, -140); beep(120, 0.12, 'square', 0.025, -40, 0.05); }
+    } else if (e.startsWith('fuse')) {                    // se prendió una mecha: chisporroteo
+      beep(1800, 0.25, 'sawtooth', 0.012, -900); beep(1400, 0.2, 'sawtooth', 0.01, -600, 0.25); beep(1600, 0.2, 'sawtooth', 0.01, -700, 0.5);
+    } else if (e.startsWith('boom')) {                    // explotó una bomba
+      const d = level.bombs[+e.slice(4)];
+      shake = reduceMotion ? 0 : 9;
+      beep(90, 0.5, 'sawtooth', 0.07, -50); beep(60, 0.6, 'square', 0.06, -30, 0.05);
+      burst(d.x, d.y - 12, 34, ['#ffd23f', '#ff7a1a', '#e2540f', '#2a1420', '#f6efe6'], 300, 160);
+    } else if (e === 'blown') {
+      state = 'dead'; deadT = 1.0; shake = reduceMotion ? 0 : 9;
+      sfx.dead();
+      burst(p.x + PW / 2, p.y + PH / 2, 22, ['#2a1420', '#ff7a1a', '#ffd23f', '#f6efe6'], 230, 160);
     } else if (e === 'zapped') {
       state = 'dead'; deadT = 1.0; shake = reduceMotion ? 0 : 7;
       sfx.dead();
