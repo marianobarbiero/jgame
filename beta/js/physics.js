@@ -11,6 +11,8 @@ const LASER_WARN = 0.6;
 const BOMB_SIGHT = 110, BOMB_FUSE = 0.9, BOMB_R = 70;
 // Zombis: si ven a J (cerca y a la misma altura) lo persiguen a "chase" px/s, sin salirse de su piedra.
 const ZOMBIE_SIGHT = 240;
+// Piedras que se caen ("crumble"): cuando J las pisa tiemblan CRUMBLE_T segundos y se caen.
+const CRUMBLE_T = 0.6;
 const G = 1500, JUMP_V = 560, RUN = 185, MAX_FALL = 900;
 const PW = 22, PH = 42, STEP = 1 / 120;
 
@@ -24,7 +26,8 @@ function newRun() {
     drops: level.drops.map(x => ({ x, state: 'idle', t: 0, y: 0, vy: 0 })),
     monsters: level.monsters.map(m => ({ x: m.sx !== undefined ? m.sx : m.dir > 0 ? m.x0 : m.x1, dir: m.dir, alive: true, fireT: FIRE_WARN + 0.4, sight: false })),
     fires: [], boxes: level.boxes.map(() => false),
-    bombs: level.bombs.map(() => ({ state: 'idle', t: 0 })) };
+    bombs: level.bombs.map(() => ({ state: 'idle', t: 0 })),
+    plats: level.platforms.map(pl => pl.crumble ? { state: 'solid', t: 0, dy: 0, vy: 0 } : null) };
 }
 
 function hits(p, pl) {
@@ -91,7 +94,9 @@ function tick(g, inp, dt) {
   p.x += p.vx * dt;
   if (p.x < 0) { p.x = 0; p.vx = 0; }
   if (p.x > level.w - PW) { p.x = level.w - PW; p.vx = 0; }
-  for (const pl of level.platforms) {
+  for (let i = 0; i < level.platforms.length; i++) {
+    const pl = level.platforms[i], st = g.plats[i];
+    if (st && (st.state === 'fall' || st.state === 'gone')) continue;   // piedra que ya se cayó
     if (hits(p, pl)) {
       if (p.vx > 0) p.x = pl.x - PW; else if (p.vx < 0) p.x = pl.x + pl.w;
       p.vx = 0;
@@ -107,11 +112,21 @@ function tick(g, inp, dt) {
   const fallV = p.vy, wasAir = !p.onGround;
   p.y += p.vy * dt;
   p.onGround = false;
-  for (const pl of level.platforms) {
+  for (let i = 0; i < level.platforms.length; i++) {
+    const pl = level.platforms[i], st = g.plats[i];
+    if (st && (st.state === 'fall' || st.state === 'gone')) continue;
     if (hits(p, pl)) {
-      if (p.vy > 0) { p.y = pl.y - PH; p.onGround = true; } else { p.y = pl.y + pl.h; }
+      if (p.vy > 0) {
+        p.y = pl.y - PH; p.onGround = true;
+        if (st && st.state === 'solid') { st.state = 'shake'; st.t = CRUMBLE_T; ev.push('crack' + i); }   // la pisó: empieza a caerse
+      } else { p.y = pl.y + pl.h; }
       p.vy = 0;
     }
+  }
+  for (const st of g.plats) {                                      // piedras que tiemblan y se caen
+    if (!st) continue;
+    if (st.state === 'shake' && (st.t -= dt) <= 0) { st.state = 'fall'; st.vy = 0; }
+    else if (st.state === 'fall') { st.vy += G * 0.7 * dt; st.dy += st.vy * dt; if (st.dy > 500) st.state = 'gone'; }
   }
   // Cajas: si J les pega con la cabeza (subiendo), se abren.
   level.boxes.forEach((bx, i) => {
@@ -166,7 +181,12 @@ function tick(g, inp, dt) {
     const top = def.y - (def.h || MH);                         // los zombis son más altos (h: 40)
     if (p.x + PW - 3 > m.x + 2 && p.x + 3 < m.x + MW - 2 && p.y + PH > top + 2 && p.y < def.y) {
       if (p.vy > 0 && p.y + PH - top < 16) { m.alive = false; p.vy = -STOMP_V; p.onGround = false; ev.push('stomp' + i); }
-      else { g.status = 'dead'; ev.push(def.zombie ? 'zombied' : 'bitten'); return ev; }
+      else {
+        // Lo que cuesta que te toque: los zombis sacan 5 diamantes salvo que digan otra cosa ("penalty").
+        const pay = def.penalty !== undefined ? def.penalty : def.zombie ? 5 : 0;
+        if (pay) ev.push('pay' + pay);
+        g.status = 'dead'; ev.push(def.zombie ? 'zombied' : 'bitten'); return ev;
+      }
     }
   }
   // Bolas de fuego: van derecho hacia la izquierda, a la altura de las rodillas de J. Se apagan solas o contra una piedra.
@@ -198,7 +218,7 @@ function tick(g, inp, dt) {
     }
   }
   for (const sp of level.spikes) {
-    if (spikeHit(p, sp)) { g.status = 'dead'; ev.push('spiked'); return ev; }
+    if (spikeHit(p, sp)) { if (sp.cost) ev.push('cost' + sp.cost); g.status = 'dead'; ev.push('spiked'); return ev; }   // "cost": vidas que saca
   }
   for (const lz of level.lasers) {
     if (laserOn(lz, g.t) && laserHit(p, lz)) { g.status = 'dead'; ev.push('zapped'); return ev; }

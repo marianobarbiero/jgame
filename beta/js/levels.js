@@ -315,6 +315,41 @@ const LEVELS = [
     ],
     stars: [ { x: 880, y: 235 }, { x: 1700, y: 215 }, { x: 2475, y: 140 } ],
     start: { x: 60, y: 330 - PH }, goalX: 3690, goalY: 330
+  },
+  {
+    // Todo junto: la lava sube, piedras que se caen ("crumble"), pinchos violetas que sacan 3 vidas ("cost: 3"),
+    // monstruos y zombis que sacan 1 diamante ("penalty: 1"), bombas, monstruo de fuego y pinchos altos. 5 vidas.
+    name: 'Nivel 11', sub: 'Todo junto', w: 4200, rise: 3.6, lives: 5,
+    banner: '¡Todo junto! ¡Apurate!', hint: 'Las piedras rotas se caen y los pinchos violetas sacan 3 vidas', music: true,
+    sky: ['#160a0a', '#2e1410', '#6a2a12'],
+    platforms: [
+      { x: 0,    y: 340, w: 360 },
+      { x: 440,  y: 330, w: 80, crumble: true },
+      { x: 600,  y: 320, w: 80, crumble: true },
+      { x: 760,  y: 310, w: 80, crumble: true },
+      { x: 920,  y: 300, w: 600 },
+      { x: 1600, y: 280, w: 80 },
+      { x: 1760, y: 260, w: 600 },
+      { x: 2440, y: 250, w: 80, crumble: true },
+      { x: 2600, y: 240, w: 80, crumble: true },
+      { x: 2760, y: 230, w: 600 },
+      { x: 3440, y: 210, w: 80 },
+      { x: 3600, y: 200, w: 600 }
+    ],
+    spikes: [
+      { x: 1010, y: 300, w: 40, cost: 3 },
+      { x: 1880, y: 260, w: 24, h: 46 },
+      { x: 3700, y: 200, w: 30, cost: 3 },
+      { x: 3900, y: 200, w: 24, h: 66 }
+    ],
+    monsters: [
+      { x0: 1200, x1: 1340, y: 300, speed: 60, dir: -1, penalty: 1 },
+      { x0: 2130, x1: 2210, y: 260, speed: 40, dir: -1, fire: 2.8 },
+      { x0: 3080, x1: 3200, y: 230, speed: 25, chase: 65, dir: -1, zombie: true, penalty: 1 }
+    ],
+    bombs: [ { x: 260, y: 340 }, { x: 2960, y: 230 } ],
+    stars: [ { x: 640, y: 240 }, { x: 1892, y: 175 }, { x: 3150, y: 150 } ],
+    start: { x: 60, y: 340 - PH }, goalX: 4100, goalY: 200
   }
 ];
 LEVELS.forEach(lv => {

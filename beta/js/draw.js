@@ -35,8 +35,20 @@ function drawStalactites() {
   }
 }
 
-function drawPlatform(pl) {
+function drawPlatform(pl, st) {
   if (pl.x + pl.w < cam - 4 || pl.x > cam + viewW + 4) return;
+  if (st) {                                                        // piedra que se cae: tiembla, cae, desaparece
+    if (st.state === 'gone') return;
+    const sx = st.state === 'shake' && !reduceMotion ? Math.sin(time * 60) * 2 : 0;
+    ctx.save(); ctx.translate(sx, st.dy);
+    drawPlatform(Object.assign({}, pl, { crumble: false }), null);
+    ctx.strokeStyle = 'rgba(20,14,26,.75)'; ctx.lineWidth = 2;      // grietas, para que se vea que es frágil
+    ctx.beginPath();
+    ctx.moveTo(pl.x + pl.w * 0.3, pl.y); ctx.lineTo(pl.x + pl.w * 0.42, pl.y + 14); ctx.lineTo(pl.x + pl.w * 0.32, pl.y + 26); ctx.lineTo(pl.x + pl.w * 0.45, pl.y + 44);
+    ctx.moveTo(pl.x + pl.w * 0.72, pl.y); ctx.lineTo(pl.x + pl.w * 0.6, pl.y + 18); ctx.lineTo(pl.x + pl.w * 0.7, pl.y + 34);
+    ctx.stroke(); ctx.restore();
+    return;
+  }
   const T = 16, ph = Math.min(pl.h, H - pl.y);
   if (pl.float) { ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(pl.x + 4, pl.y + ph, pl.w - 8, 4); }
   for (let ty = 0; ty < ph; ty += T) {
@@ -60,11 +72,16 @@ function drawSpikes(sp) {
   for (let i = 0; i < n; i++) {
     const x0 = sp.x + i * tw;
     ctx.beginPath(); ctx.moveTo(x0, sp.y); ctx.lineTo(x0 + tw / 2, sp.y - h); ctx.lineTo(x0 + tw, sp.y); ctx.closePath();
-    ctx.fillStyle = '#eef1f8'; ctx.fill();
+    ctx.fillStyle = sp.cost ? '#c084fc' : '#eef1f8'; ctx.fill();      // violetas: sacan más vidas
     ctx.beginPath(); ctx.moveTo(x0 + tw / 2, sp.y - h); ctx.lineTo(x0 + tw, sp.y); ctx.lineTo(x0 + tw * 0.6, sp.y); ctx.closePath();
-    ctx.fillStyle = '#8f96ab'; ctx.fill();
+    ctx.fillStyle = sp.cost ? '#7e22ce' : '#8f96ab'; ctx.fill();
   }
-  ctx.fillStyle = '#e5484d'; ctx.fillRect(sp.x, sp.y, sp.w, 4);
+  ctx.fillStyle = sp.cost ? '#7e22ce' : '#e5484d'; ctx.fillRect(sp.x, sp.y, sp.w, 4);
+  if (sp.cost) {                                                   // cuántas vidas saca
+    ctx.font = '800 12px Nunito, "Trebuchet MS", sans-serif'; ctx.textAlign = 'center';
+    ctx.fillStyle = '#1c0d05'; ctx.fillText('-' + sp.cost + ' ♥', sp.x + sp.w / 2 + 1, sp.y - h - 5);
+    ctx.fillStyle = '#e9d5ff'; ctx.fillText('-' + sp.cost + ' ♥', sp.x + sp.w / 2, sp.y - h - 6);
+  }
 }
 
 function drawCeiling() {
@@ -361,7 +378,7 @@ function draw() {
   ctx.setTransform(s, 0, 0, s, (-cr + sx) * s, sy * s);
 
   drawGoal();
-  level.platforms.forEach(drawPlatform);
+  level.platforms.forEach((pl, i) => drawPlatform(pl, run.plats[i]));
   level.spikes.forEach(drawSpikes);
   level.lasers.forEach(drawLaser);
   level.boxes.forEach(drawBox);

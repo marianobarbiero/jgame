@@ -62,7 +62,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 .levels .btn{font-size:1.05rem;padding:6px 6px;margin-top:0;font-family:var(--font-body);font-weight:800}
 #startOverlay h2 + p{display:none}
 #startOverlay .card{gap:8px}
-@media (min-width:561px){#startOverlay .card{max-width:600px}.levels{grid-template-columns:repeat(5,1fr)}}
+@media (min-width:561px){#startOverlay .card{max-width:640px}.levels{grid-template-columns:repeat(6,1fr)}}
 .levels .btn small{font-size:.68rem}
 .tools{display:flex;flex-direction:column;gap:8px}
 .tool-list,.tool-nav{display:flex;flex-wrap:wrap;gap:6px}
@@ -124,7 +124,10 @@ button:focus-visible{outline:3px solid var(--diamond);outline-offset:3px}
   .my-list{max-height:180px}
   .my-card h2{font-size:1.15rem}
   .my-row .tool{flex:1}
-  .levels{grid-template-columns:repeat(3,1fr);gap:6px}
+  .levels{grid-template-columns:repeat(4,1fr);gap:5px}
+  .levels .btn{font-size:.85rem}
+  .levels .btn small{font-size:.58rem}
+  .best em{display:block}
   .levels .btn{font-size:.9rem;padding:4px 4px 5px}
   .levels .btn small{font-size:.62rem}
   .best{margin-top:1px;font-size:.75rem}

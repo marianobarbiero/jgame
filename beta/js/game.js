@@ -222,10 +222,10 @@ const OUCH = {
 const OUCH_T = 3;
 let ouch = '', ouchT = 0;
 // Vidas (solo en los niveles con "lives", como el 9). Al perderlas todas: -1 diamante y el nivel empieza de cero.
-let lives = 0, outOfLives = false;
+let lives = 0, outOfLives = false, cost = 1;
 function loseLife() {
-  if (!level.lives) return;
-  lives = Math.max(0, lives - 1);
+  if (!level.lives) { cost = 1; return; }
+  lives = Math.max(0, lives - cost); cost = 1;
   if (lives > 0) return;
   outOfLives = true;
   const had = diamonds > 0;
@@ -236,6 +236,13 @@ function loseLife() {
 function handle(ev) {
   for (const e of ev) {
     const p = run.p;
+    if (e.startsWith('cost')) { cost = +e.slice(4); continue; }       // el próximo golpe saca más vidas (pinchos violetas)
+    if (e.startsWith('pay')) {                                        // te tocó un zombi o un monstruo que saca diamantes
+      const lost = Math.min(+e.slice(3), diamonds);
+      if (lost) { diamonds -= lost; store.set('diamonds', diamonds); renderHud(); }
+      toast = { t: 4, text: lost ? '-' + lost + (lost === 1 ? ' diamante' : ' diamantes') : '¡Uy!', sub: 'Tenés ' + diamonds + (diamonds === 1 ? ' diamante.' : ' diamantes.') };
+      continue;
+    }
     if (OUCH[e]) { ouch = OUCH[e][(Math.random() * OUCH[e].length) | 0]; ouchT = OUCH_T; loseLife(); }
     if (e === 'jump') {
       sfx.jump();
@@ -295,13 +302,10 @@ function handle(ev) {
       state = 'dead'; deadT = 1.0; shake = reduceMotion ? 0 : 7;
       sfx.dead();
       burst(p.x + PW / 2, p.y + PH / 2, 22, ['#ff7a1a', '#ffd23f', '#e2540f', '#2a1420'], 230, 160);
-    } else if (e === 'zombied') {                         // te agarró un zombi: -5 diamantes
+    } else if (e === 'zombied') {                         // te agarró un zombi (los diamantes los saca "pay")
       state = 'dead'; deadT = 1.0; shake = reduceMotion ? 0 : 7;
       sfx.dead(); beep(110, 0.5, 'sawtooth', 0.05, -40, 0.1);
       burst(p.x + PW / 2, p.y + PH / 2, 22, ['#5fae4a', '#2e6b2a', '#e8ecf5', '#3a6fb0'], 230, 160);
-      const lost = Math.min(5, diamonds);
-      if (lost) { diamonds -= lost; store.set('diamonds', diamonds); renderHud(); }
-      toast = { t: 4, text: lost ? '-' + lost + (lost === 1 ? ' diamante' : ' diamantes') : '¡Uy, un zombi!', sub: 'Tenés ' + diamonds + (diamonds === 1 ? ' diamante.' : ' diamantes.') };
     } else if (e === 'spiked' || e === 'bitten') {
       state = 'dead'; deadT = 1.0; shake = reduceMotion ? 0 : 7;
       sfx.dead();
